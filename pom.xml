@@ -75,8 +75,13 @@
         <configuration>
           <mainClass>${main.class}</mainClass>
           <options>
-            <!-- Silences the JDK's restricted-native-access warning on startup. -->
+            <!--
+              Silences the JDK's restricted-native-access warnings on startup.
+              JavaFX loads its natives from a named module; sqlite-jdbc loads
+              its own from the classpath, so both need granting.
+            -->
             <option>--enable-native-access=javafx.graphics</option>
+            <option>--enable-native-access=ALL-UNNAMED</option>
           </options>
         </configuration>
       </plugin>
