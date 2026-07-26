@@ -1,0 +1,25 @@
+# Maven build output
+target/
+
+# SQLite database
+# NOTE: workout.db is a required deliverable. Before submission, force-add a
+# populated copy with sample data:  git add -f workout.db
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+nbproject/private/
+
+# macOS
+.DS_Store
+
+# Local planning / instructions — kept out of the public repo
+CLAUDE.md
