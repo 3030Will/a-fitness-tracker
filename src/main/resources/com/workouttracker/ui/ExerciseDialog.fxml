@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ButtonType?>
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+
+<DialogPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.workouttracker.ui.ExerciseDialogController">
+
+    <buttonTypes>
+        <ButtonType fx:constant="CANCEL"/>
+        <ButtonType fx:constant="OK"/>
+    </buttonTypes>
+
+    <content>
+        <VBox styleClass="form" prefWidth="440">
+
+            <!-- Hidden until a save is refused. Kept unmanaged so it takes no
+                 space and the form does not jump when it appears. -->
+            <VBox fx:id="errorBanner" styleClass="error-banner" managed="false" visible="false">
+                <Label fx:id="errorLabel" wrapText="true"/>
+            </VBox>
+
+            <VBox styleClass="form-field">
+                <Label styleClass="form-label" text="Name"/>
+                <TextField fx:id="nameField" promptText="Bench Press"/>
+            </VBox>
+
+            <VBox styleClass="form-field">
+                <Label styleClass="form-label" text="Category"/>
+                <HBox styleClass="segmented">
+                    <ToggleButton fx:id="cardioToggle" styleClass="seg-cardio" text="Cardio"/>
+                    <ToggleButton fx:id="liftToggle" styleClass="seg-strength" text="Weightlifting"/>
+                </HBox>
+                <Label fx:id="categoryHint" styleClass="caption"
+                       managed="false" visible="false" wrapText="true"/>
+            </VBox>
+
+        </VBox>
+    </content>
+
+</DialogPane>

@@ -4,14 +4,19 @@ import com.workouttracker.model.Category;
 import com.workouttracker.model.Exercise;
 import com.workouttracker.service.ExerciseService;
 import com.workouttracker.util.DataAccessException;
+import java.io.IOException;
+import java.util.Optional;
+import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
@@ -38,12 +43,97 @@ public class MainController {
     @FXML private TableColumn<ExerciseRow, String> nameColumn;
     @FXML private TableColumn<ExerciseRow, Category> categoryColumn;
     @FXML private TableColumn<ExerciseRow, Number> entriesColumn;
+    @FXML private Button editButton;
+    @FXML private Button deleteButton;
 
     @FXML
     private void initialize() {
         setUpNavigation();
         setUpTable();
+        setUpSelection();
         refresh();
+    }
+
+    /** Edit and Delete act on the selected row, so they are dimmed without one. */
+    private void setUpSelection() {
+        BooleanBinding nothingSelected =
+                exerciseTable.getSelectionModel().selectedItemProperty().isNull();
+        editButton.disableProperty().bind(nothingSelected);
+        deleteButton.disableProperty().bind(nothingSelected);
+
+        exerciseTable.setRowFactory(table -> {
+            TableRow<ExerciseRow> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    edit(row.getItem().exercise());
+                }
+            });
+            return row;
+        });
+    }
+
+    @FXML
+    private void handleNew() {
+        edit(null);
+    }
+
+    @FXML
+    private void handleEdit() {
+        selected().ifPresent(row -> edit(row.exercise()));
+    }
+
+    @FXML
+    private void handleDelete() {
+        selected().ifPresent(this::delete);
+    }
+
+    private void edit(Exercise existing) {
+        try {
+            ExerciseDialogController
+                    .open(exerciseTable.getScene().getWindow(), existing, exercises)
+                    .ifPresent(saved -> {
+                        refresh();
+                        selectById(saved.getId());
+                    });
+        } catch (IOException e) {
+            Alerts.error("The exercise form could not be opened.", e.getMessage());
+        }
+    }
+
+    private void delete(ExerciseRow row) {
+        Exercise exercise = row.exercise();
+        String consequence = row.entryCount() == 0
+                ? "This cannot be undone."
+                : "Its %d log %s will be deleted as well. This cannot be undone."
+                        .formatted(row.entryCount(), row.entryCount() == 1 ? "entry" : "entries");
+
+        if (!Alerts.confirmDestructive(
+                "Delete \"%s\"?".formatted(exercise.getName()), consequence, "Delete")) {
+            return;
+        }
+
+        try {
+            exercises.delete(exercise.getId());
+            refresh();
+        } catch (DataAccessException e) {
+            Alerts.error("\"%s\" could not be deleted.".formatted(exercise.getName()),
+                    e.getMessage());
+        }
+    }
+
+    private Optional<ExerciseRow> selected() {
+        return Optional.ofNullable(exerciseTable.getSelectionModel().getSelectedItem());
+    }
+
+    /** Keeps the row the user just worked on selected after the list reloads. */
+    private void selectById(long exerciseId) {
+        rows.stream()
+                .filter(row -> row.exercise().getId() == exerciseId)
+                .findFirst()
+                .ifPresent(row -> {
+                    exerciseTable.getSelectionModel().select(row);
+                    exerciseTable.scrollTo(row);
+                });
     }
 
     /**
@@ -65,7 +155,8 @@ public class MainController {
     private void setUpTable() {
         exerciseTable.setItems(rows);
         exerciseTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-        exerciseTable.setPlaceholder(new Label("No exercises yet."));
+        exerciseTable.setPlaceholder(
+                new Label("No exercises yet. Add one to start logging workouts."));
 
         nameColumn.setCellValueFactory(row ->
                 new ReadOnlyStringWrapper(row.getValue().exercise().getName()));
