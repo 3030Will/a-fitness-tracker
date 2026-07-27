@@ -92,6 +92,7 @@ public class EntryDialogController {
         Button confirm = (Button) pane.lookupButton(ButtonType.OK);
         confirm.setText(creating ? "Log it" : "Save");
         confirm.getStyleClass().add("button-filled");
+        confirm.setId("dialogConfirm");
         confirm.addEventFilter(ActionEvent.ACTION, event -> {
             if (controller.save() == null) {
                 event.consume();

@@ -58,6 +58,9 @@ public final class Alerts {
         Button confirmButton = (Button) alert.getDialogPane().lookupButton(confirm);
         confirmButton.getStyleClass().add("button-danger");
         confirmButton.setDefaultButton(false);
+        // The label is shared with the toolbar button that opened this prompt,
+        // so tests need something unambiguous to aim at.
+        confirmButton.setId("confirmDestructive");
 
         Button cancelButton = (Button) alert.getDialogPane().lookupButton(ButtonType.CANCEL);
         cancelButton.setDefaultButton(true);

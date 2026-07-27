@@ -77,6 +77,7 @@ public class ExerciseDialogController {
         Button confirm = (Button) pane.lookupButton(ButtonType.OK);
         confirm.setText(creating ? "Create" : "Save");
         confirm.getStyleClass().add("button-filled");
+        confirm.setId("dialogConfirm");
 
         // Runs before the dialog would close, so a refused save keeps it open.
         confirm.addEventFilter(ActionEvent.ACTION, event -> {
