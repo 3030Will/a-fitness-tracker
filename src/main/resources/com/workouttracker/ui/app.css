@@ -653,6 +653,14 @@
 .default-color3.chart-bar { -fx-bar-fill: -yellow; }
 .default-color4.chart-bar { -fx-bar-fill: -purple; }
 
+/* A progress chart carries one series, so it would always take the first
+   accent. Put one of these on the chart and the line reads in its category's
+   colour instead: green for lifting, red for cardio.                     */
+.chart-lift   .chart-series-line  { -fx-stroke: -green; }
+.chart-lift   .chart-line-symbol  { -fx-background-color: -green, -surface-container; }
+.chart-cardio .chart-series-line  { -fx-stroke: -red;   }
+.chart-cardio .chart-line-symbol  { -fx-background-color: -red,   -surface-container; }
+
 .chart-legend {
     -fx-background-color: transparent;
     -fx-padding: 8 0 0 0;

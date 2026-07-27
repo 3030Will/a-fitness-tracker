@@ -10,17 +10,26 @@ import com.workouttracker.service.LogEntryService;
 import com.workouttracker.util.DataAccessException;
 import java.io.IOException;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
+import java.util.function.ToDoubleFunction;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
@@ -28,6 +37,7 @@ import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.layout.VBox;
 
 /**
  * The main window: the navigation rail and the exercise list.
@@ -45,6 +55,10 @@ public class MainController {
 
     private static final DateTimeFormatter ENTRY_DATE =
             DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.US);
+
+    /** Chart tick labels drop the year; the axis is short and crowds easily. */
+    private static final DateTimeFormatter CHART_DATE =
+            DateTimeFormatter.ofPattern("MMM d", Locale.US);
 
     private final ExerciseService exercises = new ExerciseService();
     private final LogEntryService logEntries = new LogEntryService();
@@ -72,6 +86,25 @@ public class MainController {
     @FXML private TableColumn<LogEntry, String> weightColumn;
     @FXML private TableColumn<LogEntry, String> distanceColumn;
     @FXML private TableColumn<LogEntry, String> durationColumn;
+
+    @FXML private ToggleButton progressNav;
+    @FXML private VBox exercisesPage;
+    @FXML private VBox progressPage;
+    @FXML private ComboBox<Exercise> progressChooser;
+    @FXML private Label progressChip;
+    @FXML private Label prChip;
+    @FXML private Label progressMessage;
+    @FXML private LineChart<String, Number> progressChart;
+    @FXML private NumberAxis progressYAxis;
+    @FXML private Label metricOneLabel;
+    @FXML private Label metricOneValue;
+    @FXML private Label metricOneUnit;
+    @FXML private Label metricTwoLabel;
+    @FXML private Label metricTwoValue;
+    @FXML private Label metricTwoUnit;
+    @FXML private Label metricThreeLabel;
+    @FXML private Label metricThreeValue;
+    @FXML private Label metricThreeUnit;
 
     @FXML
     private void initialize() {
@@ -256,12 +289,30 @@ public class MainController {
     private void setUpNavigation() {
         ToggleGroup group = new ToggleGroup();
         exercisesNav.setToggleGroup(group);
+        progressNav.setToggleGroup(group);
         exercisesNav.setSelected(true);
+
         group.selectedToggleProperty().addListener((observable, previous, current) -> {
             if (current == null) {
                 group.selectToggle(previous);
+                return;
+            }
+            boolean progress = current == progressNav;
+            setShown(progressPage, progress);
+            setShown(exercisesPage, !progress);
+            if (progress) {
+                refreshChooser();
+                showProgressFor(progressChooser.getValue());
             }
         });
+
+        progressChooser.valueProperty().addListener(
+                (observable, previous, current) -> showProgressFor(current));
+    }
+
+    private static void setShown(Node node, boolean shown) {
+        node.setVisible(shown);
+        node.setManaged(shown);
     }
 
     private void setUpTable() {
@@ -374,6 +425,183 @@ public class MainController {
             rows.clear();
             Alerts.error("Your exercises could not be loaded.", e.getMessage());
         }
+    }
+
+    /** Keeps the progress picker in step with the library, preserving its choice. */
+    private void refreshChooser() {
+        Exercise chosen = progressChooser.getValue();
+        progressChooser.getItems().setAll(rows.stream().map(ExerciseRow::exercise).toList());
+
+        if (chosen != null) {
+            progressChooser.getItems().stream()
+                    .filter(exercise -> exercise.getId() == chosen.getId())
+                    .findFirst()
+                    .ifPresent(progressChooser::setValue);
+        }
+        if (progressChooser.getValue() == null && !progressChooser.getItems().isEmpty()) {
+            progressChooser.setValue(progressChooser.getItems().getFirst());
+        }
+    }
+
+    /**
+     * Fills the progress page for one exercise: its records as readouts, and
+     * the measurement that matters plotted oldest to newest, which is the
+     * direction improvement runs in.
+     */
+    private void showProgressFor(Exercise exercise) {
+        if (exercise == null) {
+            showProgressMessage("Add an exercise to start tracking progress.");
+            return;
+        }
+
+        setShown(progressChip, true);
+        progressChip.setText(exercise.getCategory().displayName());
+        progressChip.getStyleClass().removeAll("chip-cardio", "chip-strength");
+        progressChip.getStyleClass().add(
+                exercise.getCategory() == Category.CARDIO ? "chip-cardio" : "chip-strength");
+
+        List<LogEntry> history;
+        try {
+            history = logEntries.history(exercise.getId());
+        } catch (DataAccessException e) {
+            showProgressMessage("The history for \"%s\" could not be loaded."
+                    .formatted(exercise.getName()));
+            return;
+        }
+
+        if (history.isEmpty()) {
+            showProgressMessage("Nothing logged for \"%s\" yet. Log a workout and it will chart here."
+                    .formatted(exercise.getName()));
+            return;
+        }
+
+        progressMessage.setVisible(false);
+        progressChart.setVisible(true);
+
+        if (exercise.getCategory() == Category.WEIGHTLIFTING) {
+            showLiftProgress(history);
+        } else {
+            showCardioProgress(history);
+        }
+    }
+
+    private void showLiftProgress(List<LogEntry> history) {
+        List<LiftEntry> lifts = history.stream().map(LiftEntry.class::cast).toList();
+
+        LiftEntry heaviest = lifts.stream()
+                .max(Comparator.comparingDouble(LiftEntry::getWeight))
+                .orElseThrow();
+        double bestVolume = lifts.stream().mapToDouble(LiftEntry::volume).max().orElse(0);
+
+        setMetric(metricOneLabel, metricOneValue, metricOneUnit,
+                "Heaviest set", heaviest.formattedWeight(), "lb", "metric-green");
+        setMetric(metricTwoLabel, metricTwoValue, metricTwoUnit,
+                "Best session volume", String.format(Locale.US, "%,.0f", bestVolume), "lb",
+                "metric-purple");
+        setMetric(metricThreeLabel, metricThreeValue, metricThreeUnit,
+                "Sessions logged", String.valueOf(lifts.size()), "", "metric-blue");
+
+        showPersonalRecord("Heaviest set " + heaviest.formattedWeight() + " lb on "
+                + heaviest.getDate().format(ENTRY_DATE));
+
+        plot(history, "Weight (lb)", "chart-lift",
+                entry -> ((LiftEntry) entry).getWeight());
+    }
+
+    private void showCardioProgress(List<LogEntry> history) {
+        List<CardioEntry> sessions = history.stream().map(CardioEntry.class::cast).toList();
+
+        CardioEntry longest = sessions.stream()
+                .max(Comparator.comparingDouble(CardioEntry::getDistance))
+                .orElseThrow();
+        CardioEntry fastest = sessions.stream()
+                .min(Comparator.comparingDouble(MainController::secondsPerMile))
+                .orElseThrow();
+        double totalMiles = sessions.stream().mapToDouble(CardioEntry::getDistance).sum();
+
+        setMetric(metricOneLabel, metricOneValue, metricOneUnit,
+                "Longest session", String.format(Locale.US, "%.2f", longest.getDistance()), "mi",
+                "metric-red");
+        setMetric(metricTwoLabel, metricTwoValue, metricTwoUnit,
+                "Best pace", formatPace(secondsPerMile(fastest)), "/mi", "metric-purple");
+        setMetric(metricThreeLabel, metricThreeValue, metricThreeUnit,
+                "Total distance", String.format(Locale.US, "%.1f", totalMiles), "mi",
+                "metric-blue");
+
+        showPersonalRecord("Longest %.2f mi on %s"
+                .formatted(longest.getDistance(), longest.getDate().format(ENTRY_DATE)));
+
+        plot(history, "Distance (mi)", "chart-cardio",
+                entry -> ((CardioEntry) entry).getDistance());
+    }
+
+    /** Seconds taken per mile, the comparable measure of a cardio session. */
+    private static double secondsPerMile(CardioEntry entry) {
+        return entry.getDistance() <= 0
+                ? Double.MAX_VALUE
+                : entry.getDuration() / entry.getDistance();
+    }
+
+    private static String formatPace(double secondsPerMile) {
+        long total = Math.round(secondsPerMile);
+        return String.format(Locale.US, "%d:%02d", total / 60, total % 60);
+    }
+
+    private void plot(List<LogEntry> history, String axisLabel, String categoryClass,
+            ToDoubleFunction<LogEntry> measurement) {
+
+        progressYAxis.setLabel(axisLabel);
+        progressChart.getStyleClass().removeAll("chart-lift", "chart-cardio");
+        progressChart.getStyleClass().add(categoryClass);
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        Set<String> used = new HashSet<>();
+        for (LogEntry entry : history) {
+            // A CategoryAxis merges repeated labels, which would silently drop
+            // a second session logged on the same day.
+            String label = entry.getDate().format(CHART_DATE);
+            String unique = label;
+            for (int repeat = 2; !used.add(unique); repeat++) {
+                unique = label + " (" + repeat + ")";
+            }
+            series.getData().add(
+                    new XYChart.Data<>(unique, measurement.applyAsDouble(entry)));
+        }
+
+        progressChart.getData().setAll(List.of(series));
+    }
+
+    private void showPersonalRecord(String text) {
+        prChip.setText(text);
+        setShown(prChip, true);
+    }
+
+    private void showProgressMessage(String message) {
+        progressMessage.setText(message);
+        progressMessage.setVisible(true);
+        progressChart.setVisible(false);
+        progressChart.getData().clear();
+        setShown(prChip, false);
+        setShown(progressChip, false);
+        blankMetric(metricOneLabel, metricOneValue, metricOneUnit);
+        blankMetric(metricTwoLabel, metricTwoValue, metricTwoUnit);
+        blankMetric(metricThreeLabel, metricThreeValue, metricThreeUnit);
+    }
+
+    private void blankMetric(Label label, Label value, Label unit) {
+        setMetric(label, value, unit, "—", "—", "", "metric-blue");
+    }
+
+    private void setMetric(Label label, Label value, Label unit,
+            String labelText, String valueText, String unitText, String accent) {
+
+        label.setText(labelText);
+        value.setText(valueText);
+        value.getStyleClass().removeAll(
+                "metric-green", "metric-red", "metric-blue", "metric-purple", "metric-yellow");
+        value.getStyleClass().add(accent);
+        unit.setText(unitText);
+        setShown(unit, !unitText.isEmpty());
     }
 
     /** Renders the category as a colored badge rather than bare text. */

@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
@@ -14,15 +18,14 @@
 <HBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.workouttracker.ui.MainController">
 
-    <!-- Navigation rail. Progress joins Exercises here in step 5e; until it
-         does anything, showing it would be a control that does not work. -->
     <VBox styleClass="nav-rail">
         <Label styleClass="nav-brand" text="Workout Tracker"/>
         <ToggleButton fx:id="exercisesNav" styleClass="nav-item" text="Exercises" selected="true"/>
+        <ToggleButton fx:id="progressNav" styleClass="nav-item" text="Progress"/>
     </VBox>
 
     <StackPane HBox.hgrow="ALWAYS">
-        <VBox styleClass="page">
+        <VBox fx:id="exercisesPage" styleClass="page">
 
             <VBox styleClass="section">
                 <Label styleClass="eyebrow" text="Your library"/>
@@ -95,6 +98,63 @@
                 </VBox>
 
             </HBox>
+
+        </VBox>
+
+        <!-- Progress. One exercise at a time: its records as metric readouts,
+             then how the measurement that matters has moved over time. -->
+        <VBox fx:id="progressPage" styleClass="page" visible="false" managed="false">
+
+            <VBox styleClass="section">
+                <Label styleClass="eyebrow" text="Track improvement"/>
+                <Label styleClass="headline" text="Progress"/>
+            </VBox>
+
+            <HBox alignment="CENTER_LEFT" spacing="12">
+                <Label styleClass="form-label" text="Exercise"/>
+                <ComboBox fx:id="progressChooser" prefWidth="260"/>
+                <Label fx:id="progressChip" styleClass="chip" managed="false" visible="false"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Label fx:id="prChip" styleClass="chip, chip-pr" managed="false" visible="false"/>
+            </HBox>
+
+            <HBox spacing="20">
+                <VBox styleClass="card, metric" HBox.hgrow="ALWAYS">
+                    <Label fx:id="metricOneLabel" styleClass="metric-label" text="—"/>
+                    <HBox styleClass="metric-row">
+                        <Label fx:id="metricOneValue" styleClass="metric-value" text="—"/>
+                        <Label fx:id="metricOneUnit" styleClass="metric-unit"/>
+                    </HBox>
+                </VBox>
+                <VBox styleClass="card, metric" HBox.hgrow="ALWAYS">
+                    <Label fx:id="metricTwoLabel" styleClass="metric-label" text="—"/>
+                    <HBox styleClass="metric-row">
+                        <Label fx:id="metricTwoValue" styleClass="metric-value" text="—"/>
+                        <Label fx:id="metricTwoUnit" styleClass="metric-unit"/>
+                    </HBox>
+                </VBox>
+                <VBox styleClass="card, metric" HBox.hgrow="ALWAYS">
+                    <Label fx:id="metricThreeLabel" styleClass="metric-label" text="—"/>
+                    <HBox styleClass="metric-row">
+                        <Label fx:id="metricThreeValue" styleClass="metric-value" text="—"/>
+                        <Label fx:id="metricThreeUnit" styleClass="metric-unit"/>
+                    </HBox>
+                </VBox>
+            </HBox>
+
+            <StackPane VBox.vgrow="ALWAYS">
+                <Label fx:id="progressMessage" styleClass="secondary" wrapText="true"
+                       text="Add an exercise to start tracking progress."/>
+                <LineChart fx:id="progressChart" visible="false" legendVisible="false"
+                           animated="false">
+                    <xAxis>
+                        <CategoryAxis fx:id="progressXAxis"/>
+                    </xAxis>
+                    <yAxis>
+                        <NumberAxis fx:id="progressYAxis" forceZeroInRange="false"/>
+                    </yAxis>
+                </LineChart>
+            </StackPane>
 
         </VBox>
     </StackPane>
