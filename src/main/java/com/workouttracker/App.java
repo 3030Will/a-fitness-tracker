@@ -32,8 +32,10 @@ public class App extends Application {
         try {
             stage.setTitle("Workout Progress Tracker");
             stage.setScene(buildScene());
-            stage.setMinWidth(900);
-            stage.setMinHeight(620);
+            // Below this the log panel is too narrow for its own action row
+            // and the buttons start truncating their labels.
+            stage.setMinWidth(1040);
+            stage.setMinHeight(660);
             stage.show();
         } catch (IOException | RuntimeException e) {
             fail("The application window could not be built.", e);
@@ -42,7 +44,7 @@ public class App extends Application {
 
     private Scene buildScene() throws IOException {
         Parent root = FXMLLoader.load(resource(MAIN_VIEW));
-        Scene scene = new Scene(root, 1120, 740);
+        Scene scene = new Scene(root, 1220, 780);
         scene.getStylesheets().add(resource(STYLESHEET).toExternalForm());
         return scene;
     }

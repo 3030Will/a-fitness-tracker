@@ -572,6 +572,14 @@
 .table-row-cell:selected .table-cell { -fx-text-fill: -on-surface; }
 .table-cell-numeric { -fx-alignment: center-right; -fx-font-weight: 600; }
 
+/* A numeric column's header has to sit over its values. The default above
+   pins every header left, which leaves a right-aligned number stranded far
+   from the word naming it. Put the style class on the TableColumn and both
+   the header and the cells pick it up.                                  */
+.table-view .column-header.table-cell-numeric .label {
+    -fx-alignment: center-right;
+}
+
 /* Empty state. Set this text via setPlaceholder — an empty screen is an
    invitation to act, so word it as one.                               */
 .table-view .placeholder .label {

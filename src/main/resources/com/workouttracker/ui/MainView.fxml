@@ -51,11 +51,22 @@
                 </TableView>
 
                 <VBox styleClass="section" HBox.hgrow="ALWAYS">
+                    <!-- Title and actions sit on separate rows. Together they
+                         overflow the panel and every label truncates. -->
                     <HBox alignment="CENTER_LEFT" spacing="10">
                         <Label fx:id="logTitle" styleClass="title" text="Log"/>
                         <Label fx:id="logChip" styleClass="chip" managed="false" visible="false"/>
-                        <Region HBox.hgrow="ALWAYS"/>
                         <Label fx:id="logCount" styleClass="secondary"/>
+                    </HBox>
+
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Button fx:id="editEntryButton" styleClass="button-outlined"
+                                text="Edit entry" onAction="#handleEditEntry"/>
+                        <Button fx:id="deleteEntryButton" styleClass="button-danger"
+                                text="Delete entry" onAction="#handleDeleteEntry"/>
+                        <Button fx:id="addEntryButton" styleClass="button-filled"
+                                text="Log workout" onAction="#handleAddEntry"/>
                     </HBox>
 
                     <!-- With nothing selected the table is hidden entirely
@@ -70,13 +81,14 @@
                              toggles them. -->
                         <TableView fx:id="entryTable" visible="false">
                             <columns>
-                                <TableColumn fx:id="dateColumn" text="Date" prefWidth="150"/>
-                                <TableColumn fx:id="setsColumn" text="Sets" prefWidth="80"/>
-                                <TableColumn fx:id="repsColumn" text="Reps" prefWidth="80"/>
-                                <TableColumn fx:id="weightColumn" text="Weight (lb)" prefWidth="120"/>
+                                <TableColumn fx:id="dateColumn" text="Date" prefWidth="115"
+                                             maxWidth="150"/>
+                                <TableColumn fx:id="setsColumn" text="Sets" prefWidth="90"/>
+                                <TableColumn fx:id="repsColumn" text="Reps" prefWidth="90"/>
+                                <TableColumn fx:id="weightColumn" text="Weight (lb)" prefWidth="130"/>
                                 <TableColumn fx:id="distanceColumn" text="Distance (mi)"
-                                             prefWidth="130"/>
-                                <TableColumn fx:id="durationColumn" text="Time" prefWidth="120"/>
+                                             prefWidth="150"/>
+                                <TableColumn fx:id="durationColumn" text="Time" prefWidth="130"/>
                             </columns>
                         </TableView>
                     </StackPane>

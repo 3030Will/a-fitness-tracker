@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ButtonType?>
+<?import javafx.scene.control.DatePicker?>
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.VBox?>
+
+<DialogPane xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.workouttracker.ui.EntryDialogController">
+
+    <buttonTypes>
+        <ButtonType fx:constant="CANCEL"/>
+        <ButtonType fx:constant="OK"/>
+    </buttonTypes>
+
+    <content>
+        <VBox styleClass="form" prefWidth="440">
+
+            <VBox fx:id="errorBanner" styleClass="error-banner" managed="false" visible="false">
+                <Label fx:id="errorLabel" wrapText="true"/>
+            </VBox>
+
+            <VBox styleClass="form-field">
+                <Label styleClass="form-label" text="Date"/>
+                <DatePicker fx:id="datePicker" maxWidth="Infinity"/>
+            </VBox>
+
+            <!-- Only the group matching the exercise's category is shown. -->
+            <VBox fx:id="liftFields" styleClass="form">
+                <HBox spacing="12">
+                    <VBox styleClass="form-field" HBox.hgrow="ALWAYS">
+                        <Label styleClass="form-label" text="Sets"/>
+                        <TextField fx:id="setsField" promptText="3"/>
+                    </VBox>
+                    <VBox styleClass="form-field" HBox.hgrow="ALWAYS">
+                        <Label styleClass="form-label" text="Reps"/>
+                        <TextField fx:id="repsField" promptText="10"/>
+                    </VBox>
+                </HBox>
+                <VBox styleClass="form-field">
+                    <Label styleClass="form-label" text="Weight (lb)"/>
+                    <TextField fx:id="weightField" promptText="135"/>
+                </VBox>
+            </VBox>
+
+            <VBox fx:id="cardioFields" styleClass="form">
+                <VBox styleClass="form-field">
+                    <Label styleClass="form-label" text="Distance (mi)"/>
+                    <TextField fx:id="distanceField" promptText="3.10"/>
+                </VBox>
+                <VBox styleClass="form-field">
+                    <Label styleClass="form-label" text="Time"/>
+                    <TextField fx:id="durationField" promptText="30:00 or 01:05:00"/>
+                </VBox>
+            </VBox>
+
+        </VBox>
+    </content>
+
+</DialogPane>

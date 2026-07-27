@@ -56,7 +56,8 @@ class FxmlSmokeTest {
     @ParameterizedTest
     @ValueSource(strings = {
             "/com/workouttracker/ui/MainView.fxml",
-            "/com/workouttracker/ui/ExerciseDialog.fxml"
+            "/com/workouttracker/ui/ExerciseDialog.fxml",
+            "/com/workouttracker/ui/EntryDialog.fxml"
     })
     @DisplayName("the layout loads and its controller wires up")
     void loads(String path) throws Exception {

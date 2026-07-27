@@ -62,6 +62,9 @@ public class MainController {
     @FXML private Label logChip;
     @FXML private Label logCount;
     @FXML private Label noSelectionMessage;
+    @FXML private Button editEntryButton;
+    @FXML private Button deleteEntryButton;
+    @FXML private Button addEntryButton;
     @FXML private TableView<LogEntry> entryTable;
     @FXML private TableColumn<LogEntry, String> dateColumn;
     @FXML private TableColumn<LogEntry, String> setsColumn;
@@ -88,6 +91,23 @@ public class MainController {
 
         exerciseTable.getSelectionModel().selectedItemProperty()
                 .addListener((observable, previous, current) -> showLogFor(current));
+
+        // Logging needs an exercise; editing and deleting need an entry.
+        addEntryButton.disableProperty().bind(nothingSelected);
+        BooleanBinding noEntrySelected =
+                entryTable.getSelectionModel().selectedItemProperty().isNull();
+        editEntryButton.disableProperty().bind(noEntrySelected);
+        deleteEntryButton.disableProperty().bind(noEntrySelected);
+
+        entryTable.setRowFactory(table -> {
+            TableRow<LogEntry> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    editEntry(row.getItem());
+                }
+            });
+            return row;
+        });
 
         exerciseTable.setRowFactory(table -> {
             TableRow<ExerciseRow> row = new TableRow<>();
@@ -147,6 +167,70 @@ public class MainController {
             Alerts.error("\"%s\" could not be deleted.".formatted(exercise.getName()),
                     e.getMessage());
         }
+    }
+
+    @FXML
+    private void handleAddEntry() {
+        selected().ifPresent(row -> editEntry(null));
+    }
+
+    @FXML
+    private void handleEditEntry() {
+        LogEntry entry = entryTable.getSelectionModel().getSelectedItem();
+        if (entry != null) {
+            editEntry(entry);
+        }
+    }
+
+    @FXML
+    private void handleDeleteEntry() {
+        LogEntry entry = entryTable.getSelectionModel().getSelectedItem();
+        if (entry == null) {
+            return;
+        }
+
+        // summary() renders the entry the way its own kind should read, so the
+        // prompt names what is about to go rather than saying "this entry".
+        boolean confirmed = Alerts.confirmDestructive(
+                "Delete this entry?",
+                "%s on %s will be removed. This cannot be undone."
+                        .formatted(entry.summary(), entry.getDate().format(ENTRY_DATE)),
+                "Delete");
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+            logEntries.delete(entry.getId());
+            reloadKeepingSelection();
+        } catch (DataAccessException e) {
+            Alerts.error("The entry could not be deleted.", e.getMessage());
+        }
+    }
+
+    private void editEntry(LogEntry existing) {
+        selected().ifPresent(row -> {
+            try {
+                EntryDialogController
+                        .open(entryTable.getScene().getWindow(), row.exercise(), existing,
+                                logEntries)
+                        .ifPresent(saved -> reloadKeepingSelection());
+            } catch (IOException e) {
+                Alerts.error("The workout form could not be opened.", e.getMessage());
+            }
+        });
+    }
+
+    /**
+     * Reloads both tables after an entry changes. The library is rebuilt too,
+     * because an exercise's entry count is part of its row and a delete now
+     * cascades differently.
+     */
+    private void reloadKeepingSelection() {
+        selected().map(row -> row.exercise().getId()).ifPresent(exerciseId -> {
+            refresh();
+            selectById(exerciseId);
+        });
     }
 
     private Optional<ExerciseRow> selected() {
