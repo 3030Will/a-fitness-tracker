@@ -1,0 +1,771 @@
+/* =====================================================================
+   Workout Progress Tracker — Dark theme
+   Material 3 token structure, Apple Fitness visual language.
+
+   JavaFX CSS is a limited subset. Not available here: var(), calc(),
+   transition, transform, box-shadow, letter-spacing, text-transform,
+   ::before/::after, :not(). Use looked-up colors (-name) and
+   -fx-effect: dropshadow(...) instead.
+   ===================================================================== */
+
+
+/* =====================================================================
+   1. TOKENS
+   Every color and size in this file resolves from here. Change a token,
+   change the whole app.
+   ===================================================================== */
+
+.root {
+
+    /* ---- Surfaces: near-black base, tonal steps upward -------------- */
+    -surface:              #0A0A0C;   /* window background            */
+    -surface-lowest:       #050506;   /* insets, wells                */
+    -surface-low:          #121216;   /* nav rail                     */
+    -surface-container:    #16161B;   /* standard card                */
+    -surface-high:         #1D1D23;   /* raised card, popup, hover    */
+    -surface-highest:      #26262E;   /* pressed, selected            */
+
+    /* ---- Text and lines -------------------------------------------- */
+    -on-surface:           #F2F2F7;   /* primary text                 */
+    -on-surface-variant:   #9E9EA8;   /* labels, secondary text       */
+    -on-surface-dim:       #6E6E78;   /* placeholders, disabled       */
+    -outline:              #3A3A44;   /* input borders                */
+    -outline-variant:      #24242A;   /* hairline dividers            */
+
+    /* ---- Accents ---------------------------------------------------
+       Semantics are fixed. Do not reuse a color for a second meaning.
+         red    cardio
+         green  weightlifting
+         blue   primary actions, neutral info
+         yellow personal records, warnings
+         purple trends and analytics
+         danger destructive only — deliberately a different red
+       ---------------------------------------------------------------- */
+    -red:                  #FF375F;
+    -green:                #30D158;
+    -blue:                 #0A84FF;
+    -yellow:               #FFD60A;
+    -purple:               #BF5AF2;
+    -danger:               #FF453A;
+
+    /* Tonal fills: accent at low alpha, composited over the surface
+       beneath. Used for chips and tonal buttons.                      */
+    -red-container:        rgba(255, 55,  95,  0.16);
+    -green-container:      rgba(48,  209, 88,  0.16);
+    -blue-container:       rgba(10,  132, 255, 0.16);
+    -yellow-container:     rgba(255, 214, 10,  0.16);
+    -purple-container:     rgba(191, 90,  242, 0.16);
+    -danger-container:     rgba(255, 69,  58,  0.16);
+
+    /* ---- Shape: Apple Fitness is generously rounded ----------------
+       Radii are written literally throughout this file, not as tokens.
+       A looked-up value (-name) resolves only for colors; used on a size
+       property such as -fx-background-radius it arrives as a Double, fails
+       to convert to javafx.css.Size, and the declaration is silently
+       dropped, leaving a square corner. The scale in use:
+         small 8   medium 12   large 18   pill 999
+       ---------------------------------------------------------------- */
+
+    /* ---- Override Modena's own variables so any control this file
+            does not explicitly style still lands in the dark theme. -- */
+    -fx-base:                     -surface-container;
+    -fx-background:               -surface;
+    -fx-control-inner-background:  -surface-low;
+    -fx-text-background-color:    -on-surface;
+    -fx-accent:                   -blue;
+    -fx-default-button:           -blue;
+    -fx-focus-color:              -blue;
+    -fx-faint-focus-color:        rgba(10, 132, 255, 0.25);
+    -fx-selection-bar:            -blue;
+    -fx-selection-bar-non-focused: -surface-highest;
+
+    -fx-background-color: -surface;
+    -fx-font-family: "SF Pro Text", "Segoe UI Variable Text", "Segoe UI",
+                     "Inter", "Helvetica Neue", sans-serif;
+    -fx-font-size: 13px;
+}
+
+
+/* =====================================================================
+   2. TYPOGRAPHY
+   ===================================================================== */
+
+.label { -fx-text-fill: -on-surface; }
+
+.display   { -fx-font-size: 34px; -fx-font-weight: bold;   -fx-text-fill: -on-surface; }
+.headline  { -fx-font-size: 24px; -fx-font-weight: bold;   -fx-text-fill: -on-surface; }
+.title     { -fx-font-size: 18px; -fx-font-weight: 600;    -fx-text-fill: -on-surface; }
+.subtitle  { -fx-font-size: 15px; -fx-font-weight: 600;    -fx-text-fill: -on-surface; }
+.body      { -fx-font-size: 13px;                          -fx-text-fill: -on-surface; }
+.secondary { -fx-font-size: 13px;                          -fx-text-fill: -on-surface-variant; }
+.caption   { -fx-font-size: 11px; -fx-font-weight: 600;    -fx-text-fill: -on-surface-variant; }
+
+/* Section eyebrow above a group of cards. Sentence case — JavaFX has no
+   text-transform, so type the label the way it should read.           */
+.eyebrow {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -on-surface-dim;
+}
+
+
+/* =====================================================================
+   3. SIGNATURE — THE METRIC READOUT
+   The one memorable element: an oversized colored numeral with a small
+   dim label. Straight from Apple Fitness. Pair .metric-label with a
+   .metric-value that carries an accent modifier.
+
+   FXML sketch:
+     <VBox styleClass="metric">
+       <Label styleClass="metric-label" text="Heaviest set"/>
+       <HBox styleClass="metric-row">
+         <Label styleClass="metric-value, metric-green" text="185"/>
+         <Label styleClass="metric-unit" text="lb"/>
+       </HBox>
+     </VBox>
+   ===================================================================== */
+
+.metric      { -fx-spacing: 2; }
+.metric-row  { -fx-spacing: 4; -fx-alignment: baseline-left; }
+
+.metric-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -on-surface-variant;
+}
+
+.metric-value {
+    -fx-font-size: 40px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -on-surface;
+}
+
+.metric-unit {
+    -fx-font-size: 15px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -on-surface-variant;
+    -fx-padding: 0 0 6 0;
+}
+
+/* Accent modifiers — apply to any text node. */
+.metric-red    , .text-red    { -fx-text-fill: -red;    }
+.metric-green  , .text-green  { -fx-text-fill: -green;  }
+.metric-blue   , .text-blue   { -fx-text-fill: -blue;   }
+.metric-yellow , .text-yellow { -fx-text-fill: -yellow; }
+.metric-purple , .text-purple { -fx-text-fill: -purple; }
+
+/* Smaller variant for a row of stats inside one card. */
+.metric-value-sm { -fx-font-size: 26px; -fx-font-weight: bold; }
+
+
+/* =====================================================================
+   4. CARDS
+   ===================================================================== */
+
+.card {
+    -fx-background-color: -surface-container;
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
+    -fx-padding: 18;
+}
+
+.card-raised {
+    -fx-background-color: -surface-high;
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
+    -fx-padding: 18;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.55), 18, 0.0, 0, 6);
+}
+
+/* Card with a colored left edge marking its category. Two stacked
+   backgrounds: the accent bar, then the surface inset from the left. */
+.card-cardio,
+.card-strength {
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
+    -fx-background-insets: 0, 0 0 0 4;
+    -fx-padding: 18;
+}
+.card-cardio   { -fx-background-color: -red,   -surface-container; }
+.card-strength { -fx-background-color: -green, -surface-container; }
+
+/* Grouped list of rows inside a card, Apple-settings style. */
+.card-row {
+    -fx-padding: 12 4 12 4;
+    -fx-border-color: transparent transparent -outline-variant transparent;
+    -fx-border-width: 0 0 1 0;
+}
+.card-row:hover     { -fx-background-color: -surface-high; }
+.card-row-last      { -fx-border-width: 0; }
+
+.section     { -fx-spacing: 12; }
+.page        { -fx-padding: 24; -fx-spacing: 20; -fx-background-color: -surface; }
+
+
+/* =====================================================================
+   5. BUTTONS
+   ===================================================================== */
+
+/* Base: pill-shaped, Apple Fitness proportions. */
+.button, .toggle-button {
+    -fx-background-color: -surface-highest;
+    -fx-text-fill: -on-surface;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-padding: 9 20 9 20;
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-cursor: hand;
+    -fx-effect: null;
+}
+.button:hover, .toggle-button:hover   { -fx-background-color: derive(-surface-highest, 18%); }
+.button:pressed, .toggle-button:pressed { -fx-background-color: derive(-surface-highest, -12%); }
+.button:focused, .toggle-button:focused {
+    -fx-border-color: -blue;
+    -fx-border-width: 2;
+}
+.button:disabled, .toggle-button:disabled {
+    -fx-opacity: 1.0;
+    -fx-background-color: -surface-container;
+    -fx-text-fill: -on-surface-dim;
+    -fx-cursor: default;
+}
+
+/* Filled — one per screen, the primary action. */
+.button-filled {
+    -fx-background-color: -blue;
+    -fx-text-fill: white;
+}
+.button-filled:hover   { -fx-background-color: derive(-blue, 15%); }
+.button-filled:pressed { -fx-background-color: derive(-blue, -15%); }
+
+/* Tonal — secondary actions, accent-tinted. */
+.button-tonal-blue   { -fx-background-color: -blue-container;   -fx-text-fill: -blue;   }
+.button-tonal-green  { -fx-background-color: -green-container;  -fx-text-fill: -green;  }
+.button-tonal-red    { -fx-background-color: -red-container;    -fx-text-fill: -red;    }
+.button-tonal-yellow { -fx-background-color: -yellow-container; -fx-text-fill: -yellow; }
+.button-tonal-purple { -fx-background-color: -purple-container; -fx-text-fill: -purple; }
+
+/* Outlined. */
+.button-outlined {
+    -fx-background-color: transparent;
+    -fx-text-fill: -on-surface;
+    -fx-border-color: -outline;
+    -fx-border-width: 1;
+}
+.button-outlined:hover { -fx-background-color: -surface-high; }
+
+/* Text only. */
+.button-text {
+    -fx-background-color: transparent;
+    -fx-text-fill: -blue;
+    -fx-padding: 8 12 8 12;
+}
+.button-text:hover { -fx-background-color: -blue-container; }
+
+/* Destructive — delete an exercise or a log entry. */
+.button-danger {
+    -fx-background-color: -danger-container;
+    -fx-text-fill: -danger;
+}
+.button-danger:hover { -fx-background-color: rgba(255, 69, 58, 0.28); }
+
+/* Floating action button — "Log a workout". */
+.fab {
+    -fx-background-color: -blue;
+    -fx-text-fill: white;
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-padding: 14 24 14 24;
+    -fx-background-radius: 999;
+    -fx-effect: dropshadow(gaussian, rgba(10, 132, 255, 0.45), 20, 0.0, 0, 6);
+}
+.fab:hover { -fx-background-color: derive(-blue, 15%); }
+
+/* Square icon button for row-level edit/delete. */
+.icon-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -on-surface-variant;
+    -fx-padding: 6 10 6 10;
+    -fx-background-radius: 8;
+    -fx-min-width: 32;
+}
+.icon-button:hover { -fx-background-color: -surface-highest; -fx-text-fill: -on-surface; }
+
+
+/* =====================================================================
+   6. CHIPS — exercise category badges
+   ===================================================================== */
+
+.chip {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 12 4 12;
+    -fx-background-radius: 999;
+}
+.chip-cardio   { -fx-background-color: -red-container;    -fx-text-fill: -red;    }
+.chip-strength { -fx-background-color: -green-container;  -fx-text-fill: -green;  }
+.chip-pr       { -fx-background-color: -yellow-container; -fx-text-fill: -yellow; }
+.chip-neutral  { -fx-background-color: -surface-highest;  -fx-text-fill: -on-surface-variant; }
+
+
+/* =====================================================================
+   7. TEXT INPUTS
+   ===================================================================== */
+
+.text-field, .text-area, .password-field {
+    -fx-background-color: -surface-low;
+    -fx-text-fill: -on-surface;
+    -fx-prompt-text-fill: -on-surface-dim;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: -outline;
+    -fx-border-width: 1;
+    -fx-padding: 10 14 10 14;
+    -fx-font-size: 13px;
+    -fx-highlight-fill: -blue;
+    -fx-highlight-text-fill: white;
+}
+.text-field:focused, .text-area:focused, .password-field:focused {
+    -fx-border-color: -blue;
+    -fx-border-width: 2;
+    -fx-padding: 9 13 9 13;   /* compensate so the field does not shift */
+}
+.text-area, .text-area .content { -fx-background-color: -surface-low; }
+.text-field:disabled { -fx-opacity: 0.5; }
+
+/* Validation state. Toggle from the controller when a check fails. */
+.field-error {
+    -fx-border-color: -danger;
+    -fx-border-width: 2;
+}
+.error-text {
+    -fx-font-size: 11px;
+    -fx-font-weight: 600;
+    -fx-text-fill: -danger;
+    -fx-padding: 4 0 0 2;
+}
+/* Inline banner for exception messages. Say what happened and what to
+   do next — never a bare stack trace.                                 */
+.error-banner {
+    -fx-background-color: -danger-container;
+    -fx-background-radius: 12;
+    -fx-border-color: rgba(255, 69, 58, 0.4);
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-padding: 12 16 12 16;
+}
+.error-banner .label { -fx-text-fill: -danger; -fx-font-weight: 600; }
+
+.form-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -on-surface-variant;
+    -fx-padding: 0 0 4 2;
+}
+.form-field { -fx-spacing: 2; }
+.form       { -fx-spacing: 16; }
+
+
+/* =====================================================================
+   8. COMBO BOX, DATE PICKER, SPINNER
+   ===================================================================== */
+
+.combo-box, .choice-box, .date-picker, .spinner {
+    -fx-background-color: -surface-low;
+    -fx-background-radius: 12;
+    -fx-border-color: -outline;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+}
+.combo-box:focused, .date-picker:focused, .spinner:focused {
+    -fx-border-color: -blue;
+    -fx-border-width: 2;
+}
+.combo-box .list-cell, .choice-box .label, .date-picker .text-field {
+    -fx-text-fill: -on-surface;
+    -fx-background-color: transparent;
+    -fx-padding: 8 12 8 12;
+}
+.combo-box .arrow-button, .date-picker .arrow-button, .spinner .increment-arrow-button,
+.spinner .decrement-arrow-button {
+    -fx-background-color: transparent;
+}
+.combo-box .arrow, .choice-box .arrow, .date-picker .arrow,
+.spinner .increment-arrow, .spinner .decrement-arrow {
+    -fx-background-color: -on-surface-variant;
+}
+
+.combo-box-popup .list-view, .choice-box-popup .list-view {
+    -fx-background-color: -surface-high;
+    -fx-background-radius: 12;
+    -fx-border-color: -outline-variant;
+    -fx-border-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 20, 0.0, 0, 8);
+}
+.combo-box-popup .list-view .list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -on-surface;
+    -fx-padding: 9 14 9 14;
+}
+.combo-box-popup .list-view .list-cell:hover {
+    -fx-background-color: -surface-highest;
+}
+.combo-box-popup .list-view .list-cell:filled:selected {
+    -fx-background-color: -blue-container;
+    -fx-text-fill: -blue;
+}
+
+.date-picker-popup {
+    -fx-background-color: -surface-high;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.6), 20, 0.0, 0, 8);
+}
+.date-picker-popup > .month-year-pane { -fx-background-color: -surface-high; }
+.date-picker-popup > * > .day-name-cell { -fx-text-fill: -on-surface-dim; -fx-font-size: 10px; }
+.date-picker-popup > * > .day-cell {
+    -fx-background-color: -surface-high;
+    -fx-text-fill: -on-surface;
+    -fx-border-color: transparent;
+}
+.date-picker-popup > * > .day-cell:hover { -fx-background-color: -surface-highest; }
+.date-picker-popup > * > .selected       { -fx-background-color: -blue; -fx-text-fill: white; }
+.date-picker-popup > * > .today          { -fx-border-color: -blue; -fx-border-width: 1; }
+
+
+/* =====================================================================
+   9. TOGGLES, CHECK BOXES, RADIOS
+   ===================================================================== */
+
+.check-box { -fx-text-fill: -on-surface; }
+.check-box .box {
+    -fx-background-color: -surface-low;
+    -fx-border-color: -outline;
+    -fx-border-width: 1.5;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-padding: 3;
+}
+.check-box:selected .box  { -fx-background-color: -blue; -fx-border-color: -blue; }
+.check-box:selected .mark { -fx-background-color: white; }
+
+.radio-button { -fx-text-fill: -on-surface; }
+.radio-button .radio {
+    -fx-background-color: -surface-low;
+    -fx-border-color: -outline;
+    -fx-border-width: 1.5;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+}
+.radio-button:selected .radio { -fx-border-color: -blue; }
+.radio-button:selected .dot   { -fx-background-color: -blue; }
+
+/* Segmented control for the cardio / weightlifting switch. Put the
+   ToggleButtons in an HBox styleClass="segmented".                    */
+.segmented {
+    -fx-background-color: -surface-low;
+    -fx-background-radius: 999;
+    -fx-padding: 3;
+}
+.segmented .toggle-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: -on-surface-variant;
+    -fx-padding: 7 18 7 18;
+    -fx-background-radius: 999;
+}
+.segmented .toggle-button:selected {
+    -fx-background-color: -surface-highest;
+    -fx-text-fill: -on-surface;
+}
+/* Selected state picks up the category color. */
+.segmented .toggle-button.seg-cardio:selected   { -fx-background-color: -red-container;   -fx-text-fill: -red;   }
+.segmented .toggle-button.seg-strength:selected { -fx-background-color: -green-container; -fx-text-fill: -green; }
+
+
+/* =====================================================================
+   10. NAVIGATION RAIL
+   ===================================================================== */
+
+.nav-rail {
+    -fx-background-color: -surface-low;
+    -fx-padding: 20 12 20 12;
+    -fx-spacing: 6;
+    -fx-min-width: 200;
+    -fx-border-color: transparent -outline-variant transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+.nav-brand {
+    -fx-font-size: 15px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -on-surface;
+    -fx-padding: 0 0 16 10;
+}
+.nav-item {
+    -fx-background-color: transparent;
+    -fx-text-fill: -on-surface-variant;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-alignment: center-left;
+    -fx-padding: 11 16 11 16;
+    -fx-background-radius: 12;
+    -fx-max-width: Infinity;
+    -fx-cursor: hand;
+}
+.nav-item:hover { -fx-background-color: -surface-high; -fx-text-fill: -on-surface; }
+.nav-item:selected, .nav-item-active {
+    -fx-background-color: -blue-container;
+    -fx-text-fill: -blue;
+}
+
+
+/* =====================================================================
+   11. TABLE VIEW — log entries and exercise lists
+   ===================================================================== */
+
+.table-view {
+    -fx-background-color: -surface-container;
+    -fx-background-radius: 18;
+    -fx-border-color: transparent;
+    -fx-padding: 0;
+    -fx-table-cell-border-color: transparent;
+}
+.table-view .column-header-background {
+    -fx-background-color: -surface-container;
+    -fx-background-radius: 18 18 0 0;
+    -fx-padding: 4 0 4 0;
+}
+.table-view .column-header,
+.table-view .filler {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent -outline-variant transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 10 12 10 12;
+    -fx-size: 40;
+}
+.table-view .column-header .label {
+    -fx-text-fill: -on-surface-dim;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-alignment: center-left;
+}
+.table-row-cell {
+    -fx-background-color: -surface-container;
+    -fx-border-color: transparent transparent -outline-variant transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-cell-size: 44;
+}
+.table-row-cell:odd    { -fx-background-color: -surface-container; }
+.table-row-cell:hover  { -fx-background-color: -surface-high; }
+.table-row-cell:selected {
+    -fx-background-color: -blue-container;
+}
+.table-row-cell:empty {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+.table-cell {
+    -fx-text-fill: -on-surface;
+    -fx-padding: 0 12 0 12;
+    -fx-alignment: center-left;
+    -fx-border-color: transparent;
+}
+.table-row-cell:selected .table-cell { -fx-text-fill: -on-surface; }
+.table-cell-numeric { -fx-alignment: center-right; -fx-font-weight: 600; }
+
+/* Empty state. Set this text via setPlaceholder — an empty screen is an
+   invitation to act, so word it as one.                               */
+.table-view .placeholder .label {
+    -fx-text-fill: -on-surface-dim;
+    -fx-font-size: 13px;
+}
+
+
+/* =====================================================================
+   12. LIST VIEW
+   ===================================================================== */
+
+.list-view {
+    -fx-background-color: -surface-container;
+    -fx-background-radius: 18;
+    -fx-border-color: transparent;
+    -fx-padding: 6;
+}
+.list-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -on-surface;
+    -fx-padding: 12 14 12 14;
+    -fx-background-radius: 12;
+}
+.list-cell:filled:hover    { -fx-background-color: -surface-high; }
+.list-cell:filled:selected { -fx-background-color: -blue-container; -fx-text-fill: -blue; }
+.list-cell:empty           { -fx-background-color: transparent; }
+
+
+/* =====================================================================
+   13. CHARTS — progress history per exercise
+   ===================================================================== */
+
+.chart {
+    -fx-background-color: -surface-container;
+    -fx-background-radius: 18;
+    -fx-padding: 16;
+}
+.chart-title       { -fx-text-fill: -on-surface; -fx-font-size: 15px; -fx-font-weight: 600; }
+.chart-plot-background { -fx-background-color: transparent; }
+.chart-vertical-grid-lines,
+.chart-horizontal-grid-lines { -fx-stroke: -outline-variant; -fx-stroke-width: 1; }
+.chart-alternative-row-fill  { -fx-fill: transparent; -fx-stroke: transparent; }
+
+.axis {
+    -fx-tick-label-fill: -on-surface-dim;
+    -fx-tick-label-font-size: 10px;
+    -fx-tick-mark-visible: false;
+    -fx-minor-tick-visible: false;
+}
+.axis:bottom { -fx-border-color: -outline-variant transparent transparent transparent; }
+.axis-label  { -fx-text-fill: -on-surface-variant; -fx-font-size: 11px; }
+
+/* Series colors follow the accent order. */
+.default-color0.chart-series-line { -fx-stroke: -green;  -fx-stroke-width: 2.5; }
+.default-color1.chart-series-line { -fx-stroke: -red;    -fx-stroke-width: 2.5; }
+.default-color2.chart-series-line { -fx-stroke: -blue;   -fx-stroke-width: 2.5; }
+.default-color3.chart-series-line { -fx-stroke: -yellow; -fx-stroke-width: 2.5; }
+.default-color4.chart-series-line { -fx-stroke: -purple; -fx-stroke-width: 2.5; }
+
+.default-color0.chart-line-symbol { -fx-background-color: -green,  -surface-container; }
+.default-color1.chart-line-symbol { -fx-background-color: -red,    -surface-container; }
+.default-color2.chart-line-symbol { -fx-background-color: -blue,   -surface-container; }
+.default-color3.chart-line-symbol { -fx-background-color: -yellow, -surface-container; }
+.default-color4.chart-line-symbol { -fx-background-color: -purple, -surface-container; }
+.chart-line-symbol { -fx-background-radius: 5; -fx-padding: 4; }
+
+.default-color0.chart-bar { -fx-bar-fill: -green;  }
+.default-color1.chart-bar { -fx-bar-fill: -red;    }
+.default-color2.chart-bar { -fx-bar-fill: -blue;   }
+.default-color3.chart-bar { -fx-bar-fill: -yellow; }
+.default-color4.chart-bar { -fx-bar-fill: -purple; }
+
+.chart-legend {
+    -fx-background-color: transparent;
+    -fx-padding: 8 0 0 0;
+}
+.chart-legend-item { -fx-text-fill: -on-surface-variant; -fx-font-size: 11px; }
+
+
+/* =====================================================================
+   14. TABS
+   ===================================================================== */
+
+.tab-pane { -fx-background-color: transparent; }
+.tab-pane > .tab-header-area { -fx-padding: 0 0 8 0; }
+.tab-pane > .tab-header-area > .tab-header-background { -fx-background-color: transparent; }
+.tab-pane > .tab-header-area > .headers-region > .tab {
+    -fx-background-color: transparent;
+    -fx-padding: 9 18 9 18;
+    -fx-background-radius: 999;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab .tab-label {
+    -fx-text-fill: -on-surface-variant;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:hover {
+    -fx-background-color: -surface-high;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:selected {
+    -fx-background-color: -surface-highest;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:selected .tab-label {
+    -fx-text-fill: -on-surface;
+}
+.tab-pane > .tab-header-area > .headers-region > .tab:selected .focus-indicator {
+    -fx-border-color: transparent;
+}
+
+
+/* =====================================================================
+   15. SCROLLING
+   ===================================================================== */
+
+.scroll-pane, .scroll-pane > .viewport { -fx-background-color: transparent; }
+.scroll-pane { -fx-background-insets: 0; -fx-padding: 0; }
+
+.scroll-bar { -fx-background-color: transparent; }
+.scroll-bar:horizontal, .scroll-bar:vertical { -fx-padding: 2; }
+.scroll-bar .track {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+.scroll-bar .thumb {
+    -fx-background-color: -surface-highest;
+    -fx-background-radius: 999;
+}
+.scroll-bar .thumb:hover { -fx-background-color: derive(-surface-highest, 25%); }
+.scroll-bar .increment-button, .scroll-bar .decrement-button {
+    -fx-background-color: transparent;
+    -fx-padding: 0;
+}
+.scroll-bar .increment-arrow, .scroll-bar .decrement-arrow { -fx-shape: null; -fx-padding: 0; }
+
+
+/* =====================================================================
+   16. DIALOGS — delete confirmations, error alerts
+   ===================================================================== */
+
+.dialog-pane {
+    -fx-background-color: -surface-high;
+    -fx-background-radius: 18;
+    -fx-padding: 8;
+}
+.dialog-pane > .header-panel {
+    -fx-background-color: -surface-high;
+    -fx-padding: 16 16 8 16;
+}
+.dialog-pane > .header-panel .label {
+    -fx-text-fill: -on-surface;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+.dialog-pane > .content       { -fx-padding: 8 16 16 16; }
+.dialog-pane > .content .label { -fx-text-fill: -on-surface-variant; -fx-font-size: 13px; -fx-wrap-text: true; }
+.dialog-pane > .button-bar > .container { -fx-padding: 8 16 12 16; }
+.dialog-pane .button { -fx-background-color: -surface-highest; }
+.dialog-pane .button:default { -fx-background-color: -blue; -fx-text-fill: white; }
+
+
+/* =====================================================================
+   17. MISC
+   ===================================================================== */
+
+.separator .line {
+    -fx-border-color: -outline-variant transparent transparent transparent;
+    -fx-border-width: 1 0 0 0;
+}
+
+.tooltip {
+    -fx-background-color: -surface-highest;
+    -fx-text-fill: -on-surface;
+    -fx-font-size: 11px;
+    -fx-background-radius: 8;
+    -fx-padding: 7 11 7 11;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.5), 12, 0.0, 0, 4);
+}
+
+.progress-bar > .track { -fx-background-color: -surface-highest; -fx-background-radius: 999; }
+.progress-bar > .bar   { -fx-background-color: -green; -fx-background-radius: 999; -fx-padding: 4; }
+.progress-indicator     { -fx-progress-color: -blue; }
+
+.titled-pane > .title {
+    -fx-background-color: -surface-container;
+    -fx-text-fill: -on-surface;
+    -fx-background-radius: 12 12 0 0;
+    -fx-padding: 12 14 12 14;
+}
+.titled-pane > *.content {
+    -fx-background-color: -surface-container;
+    -fx-border-color: transparent;
+    -fx-background-radius: 0 0 12 12;
+}
+
+/* Keyboard focus must stay visible — do not remove. */
+*:focus-visible { -fx-border-color: -blue; }

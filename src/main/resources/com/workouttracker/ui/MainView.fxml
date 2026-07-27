@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Priority?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<HBox xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.workouttracker.ui.MainController">
+
+    <!-- Navigation rail. Progress joins Exercises here in step 5e; until it
+         does anything, showing it would be a control that does not work. -->
+    <VBox styleClass="nav-rail">
+        <Label styleClass="nav-brand" text="Workout Tracker"/>
+        <ToggleButton fx:id="exercisesNav" styleClass="nav-item" text="Exercises" selected="true"/>
+    </VBox>
+
+    <StackPane HBox.hgrow="ALWAYS">
+        <VBox styleClass="page">
+
+            <VBox styleClass="section">
+                <Label styleClass="eyebrow" text="Your library"/>
+                <Label styleClass="headline" text="Exercises"/>
+            </VBox>
+
+            <TableView fx:id="exerciseTable" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="nameColumn" text="Exercise" prefWidth="320"/>
+                    <TableColumn fx:id="categoryColumn" text="Category" prefWidth="160"/>
+                    <TableColumn fx:id="entriesColumn" text="Entries" prefWidth="110"/>
+                </columns>
+            </TableView>
+
+        </VBox>
+    </StackPane>
+
+</HBox>

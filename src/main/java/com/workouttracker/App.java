@@ -1,56 +1,72 @@
 package com.workouttracker;
 
+import com.workouttracker.ui.Alerts;
 import com.workouttracker.util.DataAccessException;
 import com.workouttracker.util.Database;
+import java.io.IOException;
+import java.net.URL;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.geometry.Pos;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.Label;
-import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 
 /**
  * JavaFX entry point for the Workout Progress Tracker.
- *
- * <p>Placeholder shell for build verification. The real UI is added in step 5.
  */
 public class App extends Application {
+
+    private static final String MAIN_VIEW = "/com/workouttracker/ui/MainView.fxml";
+    private static final String STYLESHEET = "/com/workouttracker/ui/app.css";
 
     @Override
     public void start(Stage stage) {
         try {
             Database.initialize();
         } catch (DataAccessException e) {
-            showFatalError(e);
+            fail("The workout database could not be opened.", e);
             return;
         }
 
-        Label title = new Label("Workout Progress Tracker");
-        title.setStyle("-fx-font-size: 20px; -fx-font-weight: bold;");
+        try {
+            stage.setTitle("Workout Progress Tracker");
+            stage.setScene(buildScene());
+            stage.setMinWidth(900);
+            stage.setMinHeight(620);
+            stage.show();
+        } catch (IOException | RuntimeException e) {
+            fail("The application window could not be built.", e);
+        }
+    }
 
-        Label subtitle = new Label("Build scaffolding is working.");
-
-        VBox root = new VBox(10, title, subtitle);
-        root.setAlignment(Pos.CENTER);
-
-        stage.setTitle("Workout Progress Tracker");
-        stage.setScene(new Scene(root, 480, 320));
-        stage.show();
+    private Scene buildScene() throws IOException {
+        Parent root = FXMLLoader.load(resource(MAIN_VIEW));
+        Scene scene = new Scene(root, 1120, 740);
+        scene.getStylesheets().add(resource(STYLESHEET).toExternalForm());
+        return scene;
     }
 
     /**
-     * The application cannot do anything useful without its database, so a
-     * failure here is reported and then shuts the app down rather than leaving
-     * a window open on top of nothing.
+     * Resources are loaded through this rather than inline so a missing file
+     * fails immediately and by name, instead of surfacing later as a
+     * NullPointerException from somewhere inside the FXML loader.
      */
-    private void showFatalError(DataAccessException cause) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Workout Progress Tracker");
-        alert.setHeaderText("The workout database could not be opened.");
-        alert.setContentText(cause.getMessage());
-        alert.showAndWait();
+    private URL resource(String path) {
+        URL url = App.class.getResource(path);
+        if (url == null) {
+            throw new IllegalStateException("Missing resource on the classpath: " + path);
+        }
+        return url;
+    }
+
+    /**
+     * The application cannot do anything useful in this state, so it reports
+     * the problem and shuts down rather than leaving an empty window open.
+     */
+    private void fail(String header, Throwable cause) {
+        String detail = cause.getMessage() == null ? cause.toString() : cause.getMessage();
+        Alerts.error(header, detail);
         Platform.exit();
     }
 
