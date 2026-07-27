@@ -1,7 +1,7 @@
 package com.workouttracker;
 
+import com.workouttracker.util.DataAccessException;
 import com.workouttracker.util.Database;
-import java.sql.SQLException;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.geometry.Pos;
@@ -22,7 +22,7 @@ public class App extends Application {
     public void start(Stage stage) {
         try {
             Database.initialize();
-        } catch (SQLException e) {
+        } catch (DataAccessException e) {
             showFatalError(e);
             return;
         }
@@ -45,7 +45,7 @@ public class App extends Application {
      * failure here is reported and then shuts the app down rather than leaving
      * a window open on top of nothing.
      */
-    private void showFatalError(SQLException cause) {
+    private void showFatalError(DataAccessException cause) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Workout Progress Tracker");
         alert.setHeaderText("The workout database could not be opened.");

@@ -47,23 +47,29 @@ public final class Database {
      * Opens a new connection with foreign keys enforced. Callers are
      * responsible for closing it — use try-with-resources.
      */
-    public static Connection getConnection() throws SQLException {
+    public static Connection getConnection() {
         SQLiteConfig config = new SQLiteConfig();
         config.enforceForeignKeys(true);
-        return DriverManager.getConnection(url(), config.toProperties());
+        try {
+            return DriverManager.getConnection(url(), config.toProperties());
+        } catch (SQLException e) {
+            throw new DataAccessException("Could not open the workout database.", e);
+        }
     }
 
     /**
      * Creates the database file and its tables if they do not already exist.
      * Safe to call on every startup.
      */
-    public static void initialize() throws SQLException {
+    public static void initialize() {
         try (Connection connection = getConnection();
              Statement statement = connection.createStatement()) {
 
             for (String sql : splitStatements(readSchema())) {
                 statement.execute(sql);
             }
+        } catch (SQLException e) {
+            throw new DataAccessException("Could not create the workout database tables.", e);
         }
     }
 

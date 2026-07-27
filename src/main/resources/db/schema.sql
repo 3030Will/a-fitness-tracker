@@ -3,9 +3,11 @@
 -- Every statement is IF NOT EXISTS, so re-running on an existing database
 -- is a no-op and never destroys data.
 
+-- Names are unique case-insensitively: "Squats" and "squats" are the same
+-- exercise to a user, so the database should not hold both.
 CREATE TABLE IF NOT EXISTS exercises (
     id       INTEGER PRIMARY KEY,
-    name     TEXT NOT NULL UNIQUE,
+    name     TEXT NOT NULL COLLATE NOCASE UNIQUE,
     category TEXT NOT NULL CHECK (category IN ('CARDIO', 'WEIGHTLIFTING'))
 );
 
