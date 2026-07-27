@@ -10,6 +10,8 @@ import com.workouttracker.model.LiftEntry;
 import com.workouttracker.model.LogEntry;
 import java.time.LocalDate;
 import java.util.List;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -146,6 +148,28 @@ class EntryCrudUiTest extends UiTest {
         settle();
 
         assertEquals(1, entriesOfFirstExercise().size());
+    }
+
+    @Test
+    @DisplayName("the date column keeps a full date at the smallest window size")
+    void dateColumnSurvivesTheSmallestWindow() {
+        createExercise("Bench Press", false);
+        clickOn("Bench Press");
+        logLift("3", "10", "135");
+
+        // Four columns compete for the log panel here, where cardio has three.
+        // Without a minimum the date column gave way first and lost its year.
+        interact(() -> {
+            stage.setWidth(1040);
+            stage.setHeight(660);
+        });
+        settle();
+
+        TableView<?> table = lookup("#entryTable").query();
+        TableColumn<?, ?> dateColumn = table.getColumns().getFirst();
+        assertTrue(dateColumn.getWidth() >= 155,
+                "the date column shrank to " + dateColumn.getWidth()
+                        + ", which cuts the year off");
     }
 
     @Test

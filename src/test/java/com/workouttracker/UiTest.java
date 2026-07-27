@@ -30,11 +30,13 @@ abstract class UiTest extends ApplicationTest {
 
     protected ExerciseService exercises;
     protected LogEntryService logEntries;
+    protected Stage stage;
 
     private Path databaseFile;
 
     @Override
     public void start(Stage stage) throws Exception {
+        this.stage = stage;
         databaseFile = Files.createTempFile("workout-ui", ".db");
         Files.deleteIfExists(databaseFile);
         Database.configure("jdbc:sqlite:" + databaseFile);

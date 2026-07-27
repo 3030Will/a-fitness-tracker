@@ -84,8 +84,11 @@
                              toggles them. -->
                         <TableView fx:id="entryTable" visible="false">
                             <columns>
-                                <TableColumn fx:id="dateColumn" text="Date" prefWidth="115"
-                                             maxWidth="150"/>
+                                <!-- A minimum, not just a preference: with four
+                                     columns competing this shrank until the
+                                     year was cut off ("Jul 26, 2..."). -->
+                                <TableColumn fx:id="dateColumn" text="Date" prefWidth="155" minWidth="155"
+                                             maxWidth="175"/>
                                 <TableColumn fx:id="setsColumn" text="Sets" prefWidth="90"/>
                                 <TableColumn fx:id="repsColumn" text="Reps" prefWidth="90"/>
                                 <TableColumn fx:id="weightColumn" text="Weight (lb)" prefWidth="130"/>
