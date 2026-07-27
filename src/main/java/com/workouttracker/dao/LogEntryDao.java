@@ -60,6 +60,9 @@ public class LogEntryDao {
 
     private static final String DELETE = "DELETE FROM log_entries WHERE id = ?";
 
+    private static final String COUNT_BY_EXERCISE =
+            "SELECT COUNT(*) FROM log_entries WHERE exercise_id = ?";
+
     /**
      * Saves a new entry and assigns it the id the database generated.
      *
@@ -144,6 +147,25 @@ public class LogEntryDao {
      */
     public List<LogEntry> findByExerciseOldestFirst(long exerciseId) {
         return query(SELECT_BY_EXERCISE_OLDEST_FIRST, exerciseId);
+    }
+
+    /**
+     * How many entries an exercise has, without loading them. Used to warn
+     * before a delete cascades, and to block a category change that would
+     * strand the entries already recorded.
+     */
+    public int countByExercise(long exerciseId) {
+        try (Connection connection = Database.getConnection();
+             PreparedStatement statement = connection.prepareStatement(COUNT_BY_EXERCISE)) {
+
+            statement.setLong(1, exerciseId);
+            try (ResultSet rs = statement.executeQuery()) {
+                return rs.next() ? rs.getInt(1) : 0;
+            }
+
+        } catch (SQLException e) {
+            throw new DataAccessException("Could not count the log entries.", e);
+        }
     }
 
     private List<LogEntry> query(String sql, long exerciseId) {
