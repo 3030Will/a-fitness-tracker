@@ -1,11 +1,19 @@
 package com.workouttracker.ui;
 
+import com.workouttracker.model.CardioEntry;
 import com.workouttracker.model.Category;
 import com.workouttracker.model.Exercise;
+import com.workouttracker.model.LiftEntry;
+import com.workouttracker.model.LogEntry;
 import com.workouttracker.service.ExerciseService;
+import com.workouttracker.service.LogEntryService;
 import com.workouttracker.util.DataAccessException;
 import java.io.IOException;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Function;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyStringWrapper;
@@ -35,21 +43,38 @@ public class MainController {
     public record ExerciseRow(Exercise exercise, int entryCount) {
     }
 
+    private static final DateTimeFormatter ENTRY_DATE =
+            DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.US);
+
     private final ExerciseService exercises = new ExerciseService();
+    private final LogEntryService logEntries = new LogEntryService();
     private final ObservableList<ExerciseRow> rows = FXCollections.observableArrayList();
+    private final ObservableList<LogEntry> entries = FXCollections.observableArrayList();
 
     @FXML private ToggleButton exercisesNav;
     @FXML private TableView<ExerciseRow> exerciseTable;
     @FXML private TableColumn<ExerciseRow, String> nameColumn;
     @FXML private TableColumn<ExerciseRow, Category> categoryColumn;
-    @FXML private TableColumn<ExerciseRow, Number> entriesColumn;
     @FXML private Button editButton;
     @FXML private Button deleteButton;
+
+    @FXML private Label logTitle;
+    @FXML private Label logChip;
+    @FXML private Label logCount;
+    @FXML private Label noSelectionMessage;
+    @FXML private TableView<LogEntry> entryTable;
+    @FXML private TableColumn<LogEntry, String> dateColumn;
+    @FXML private TableColumn<LogEntry, String> setsColumn;
+    @FXML private TableColumn<LogEntry, String> repsColumn;
+    @FXML private TableColumn<LogEntry, String> weightColumn;
+    @FXML private TableColumn<LogEntry, String> distanceColumn;
+    @FXML private TableColumn<LogEntry, String> durationColumn;
 
     @FXML
     private void initialize() {
         setUpNavigation();
         setUpTable();
+        setUpEntryTable();
         setUpSelection();
         refresh();
     }
@@ -60,6 +85,9 @@ public class MainController {
                 exerciseTable.getSelectionModel().selectedItemProperty().isNull();
         editButton.disableProperty().bind(nothingSelected);
         deleteButton.disableProperty().bind(nothingSelected);
+
+        exerciseTable.getSelectionModel().selectedItemProperty()
+                .addListener((observable, previous, current) -> showLogFor(current));
 
         exerciseTable.setRowFactory(table -> {
             TableRow<ExerciseRow> row = new TableRow<>();
@@ -165,9 +193,91 @@ public class MainController {
                 new ReadOnlyObjectWrapper<>(row.getValue().exercise().getCategory()));
         categoryColumn.setCellFactory(column -> new CategoryChipCell());
 
-        entriesColumn.setCellValueFactory(row ->
-                new ReadOnlyObjectWrapper<>(row.getValue().entryCount()));
-        entriesColumn.getStyleClass().add("table-cell-numeric");
+    }
+
+    /**
+     * Both kinds of entry share one table. Every column is created up front and
+     * the ones belonging to the other category are hidden, which keeps the
+     * layout stable when the selection moves between a lift and a run.
+     */
+    private void setUpEntryTable() {
+        entryTable.setItems(entries);
+        // Spread spare width across every column. Giving it all to the last one
+        // strands a right-aligned number far from the header above it.
+        entryTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        entryTable.setPlaceholder(new Label("Nothing logged for this exercise yet."));
+
+        dateColumn.setCellValueFactory(row ->
+                new ReadOnlyStringWrapper(row.getValue().getDate().format(ENTRY_DATE)));
+
+        setsColumn.setCellValueFactory(row -> lift(row.getValue(),
+                lift -> String.valueOf(lift.getSets())));
+        repsColumn.setCellValueFactory(row -> lift(row.getValue(),
+                lift -> String.valueOf(lift.getReps())));
+        weightColumn.setCellValueFactory(row -> lift(row.getValue(),
+                LiftEntry::formattedWeight));
+
+        distanceColumn.setCellValueFactory(row -> cardio(row.getValue(),
+                entry -> String.format(Locale.US, "%.2f", entry.getDistance())));
+        durationColumn.setCellValueFactory(row -> cardio(row.getValue(),
+                CardioEntry::formattedDuration));
+
+        for (TableColumn<LogEntry, String> column :
+                List.of(setsColumn, repsColumn, weightColumn, distanceColumn, durationColumn)) {
+            column.getStyleClass().add("table-cell-numeric");
+        }
+    }
+
+    private ReadOnlyStringWrapper lift(LogEntry entry, Function<LiftEntry, String> read) {
+        return new ReadOnlyStringWrapper(entry instanceof LiftEntry l ? read.apply(l) : "");
+    }
+
+    private ReadOnlyStringWrapper cardio(LogEntry entry, Function<CardioEntry, String> read) {
+        return new ReadOnlyStringWrapper(entry instanceof CardioEntry c ? read.apply(c) : "");
+    }
+
+    /** Loads the log for the selected exercise, or empties it when none is. */
+    private void showLogFor(ExerciseRow row) {
+        if (row == null) {
+            entries.clear();
+            logTitle.setText("Log");
+            logCount.setText("");
+            logChip.setVisible(false);
+            logChip.setManaged(false);
+            entryTable.setVisible(false);
+            noSelectionMessage.setVisible(true);
+            return;
+        }
+
+        entryTable.setVisible(true);
+        noSelectionMessage.setVisible(false);
+
+        Exercise exercise = row.exercise();
+        boolean lifting = exercise.getCategory() == Category.WEIGHTLIFTING;
+
+        setsColumn.setVisible(lifting);
+        repsColumn.setVisible(lifting);
+        weightColumn.setVisible(lifting);
+        distanceColumn.setVisible(!lifting);
+        durationColumn.setVisible(!lifting);
+
+        logTitle.setText(exercise.getName());
+        logChip.setText(exercise.getCategory().displayName());
+        logChip.getStyleClass().removeAll("chip-cardio", "chip-strength");
+        logChip.getStyleClass().add(lifting ? "chip-strength" : "chip-cardio");
+        logChip.setVisible(true);
+        logChip.setManaged(true);
+        entryTable.setPlaceholder(new Label("Nothing logged for this exercise yet."));
+
+        try {
+            entries.setAll(logEntries.findByExercise(exercise.getId()));
+            logCount.setText(entries.size() == 1 ? "1 entry" : entries.size() + " entries");
+        } catch (DataAccessException e) {
+            entries.clear();
+            logCount.setText("");
+            Alerts.error("The log for \"%s\" could not be loaded.".formatted(exercise.getName()),
+                    e.getMessage());
+        }
     }
 
     /** Reloads the list from the database. */

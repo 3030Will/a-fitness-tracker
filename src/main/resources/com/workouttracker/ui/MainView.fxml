@@ -38,13 +38,51 @@
                 </HBox>
             </VBox>
 
-            <TableView fx:id="exerciseTable" VBox.vgrow="ALWAYS">
-                <columns>
-                    <TableColumn fx:id="nameColumn" text="Exercise" prefWidth="320"/>
-                    <TableColumn fx:id="categoryColumn" text="Category" prefWidth="160"/>
-                    <TableColumn fx:id="entriesColumn" text="Entries" prefWidth="110"/>
-                </columns>
-            </TableView>
+            <!-- Library on the left, the selected exercise's log on the right.
+                 The log carries more columns, so it takes the flexible side. -->
+            <HBox spacing="20" VBox.vgrow="ALWAYS">
+
+                <!-- Wide enough that the "Weightlifting" chip is not clipped. -->
+                <TableView fx:id="exerciseTable" prefWidth="400" minWidth="340">
+                    <columns>
+                        <TableColumn fx:id="nameColumn" text="Exercise" prefWidth="205"/>
+                        <TableColumn fx:id="categoryColumn" text="Category" prefWidth="175"/>
+                    </columns>
+                </TableView>
+
+                <VBox styleClass="section" HBox.hgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label fx:id="logTitle" styleClass="title" text="Log"/>
+                        <Label fx:id="logChip" styleClass="chip" managed="false" visible="false"/>
+                        <Region HBox.hgrow="ALWAYS"/>
+                        <Label fx:id="logCount" styleClass="secondary"/>
+                    </HBox>
+
+                    <!-- With nothing selected the table is hidden entirely
+                         rather than shown with column headers for measurements
+                         that may not even apply to the exercise picked next. -->
+                    <StackPane VBox.vgrow="ALWAYS">
+                        <Label fx:id="noSelectionMessage" styleClass="secondary"
+                               text="Select an exercise to see its log."/>
+
+                        <!-- Only the columns belonging to the selected
+                             exercise's category are shown; the controller
+                             toggles them. -->
+                        <TableView fx:id="entryTable" visible="false">
+                            <columns>
+                                <TableColumn fx:id="dateColumn" text="Date" prefWidth="150"/>
+                                <TableColumn fx:id="setsColumn" text="Sets" prefWidth="80"/>
+                                <TableColumn fx:id="repsColumn" text="Reps" prefWidth="80"/>
+                                <TableColumn fx:id="weightColumn" text="Weight (lb)" prefWidth="120"/>
+                                <TableColumn fx:id="distanceColumn" text="Distance (mi)"
+                                             prefWidth="130"/>
+                                <TableColumn fx:id="durationColumn" text="Time" prefWidth="120"/>
+                            </columns>
+                        </TableView>
+                    </StackPane>
+                </VBox>
+
+            </HBox>
 
         </VBox>
     </StackPane>
