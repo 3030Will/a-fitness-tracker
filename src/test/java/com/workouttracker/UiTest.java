@@ -8,6 +8,8 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -74,37 +76,87 @@ abstract class UiTest extends ApplicationTest {
         WaitForAsyncUtils.waitForFxEvents();
     }
 
+    /**
+     * Waits for something to appear before touching it.
+     *
+     * <p>A dialog opens on its own window and is not there the instant the
+     * button that opens it is clicked. Typing straight away passes most of the
+     * time and fails the rest, which is worse than failing always.
+     */
+    protected void waitForNode(String query) {
+        try {
+            WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS,
+                    () -> lookup(query).tryQuery().isPresent());
+        } catch (TimeoutException e) {
+            throw new AssertionError(query + " never appeared", e);
+        }
+        settle();
+    }
+
+    /** Waits for something to go away, so the next click cannot land on it. */
+    protected void waitUntilGone(String query) {
+        try {
+            WaitForAsyncUtils.waitFor(10, TimeUnit.SECONDS,
+                    () -> lookup(query).tryQuery().isEmpty());
+        } catch (TimeoutException e) {
+            throw new AssertionError(query + " never went away", e);
+        }
+        settle();
+    }
+
     // --- building state the way a user would -------------------------------
     //
     // Going through the UI rather than the services keeps the tables in step:
     // the window loads once, so anything written straight to the database
     // afterwards would never appear on screen.
 
+    /** Opens a form and waits until one of its fields is actually there. */
+    protected void openForm(String buttonText, String firstField) {
+        clickOn(buttonText);
+        waitForNode(firstField);
+    }
+
+    /** Confirms a form and waits for it to close. */
+    protected void submitForm() {
+        clickOn("#dialogConfirm");
+        waitUntilGone("#dialogConfirm");
+    }
+
+    /** Agrees to a delete prompt and waits for it to close. */
+    protected void confirmDelete() {
+        waitForNode("#confirmDestructive");
+        clickOn("#confirmDestructive");
+        waitUntilGone("#confirmDestructive");
+    }
+
+    /** Declines whichever prompt or form is open and waits for it to close. */
+    protected void cancelDialog() {
+        clickOn("Cancel");
+        waitUntilGone("Cancel");
+    }
+
     protected void createExercise(String name, boolean cardio) {
-        clickOn("New exercise");
+        openForm("New exercise", "#nameField");
         clickOn("#nameField").write(name);
         if (cardio) {
             clickOn("#cardioToggle");
         }
-        clickOn("#dialogConfirm");
-        settle();
+        submitForm();
     }
 
     protected void logLift(String sets, String reps, String weight) {
-        clickOn("Log workout");
+        openForm("Log workout", "#setsField");
         clickOn("#setsField").write(sets);
         clickOn("#repsField").write(reps);
         clickOn("#weightField").write(weight);
-        clickOn("#dialogConfirm");
-        settle();
+        submitForm();
     }
 
     protected void logCardio(String distance, String duration) {
-        clickOn("Log workout");
+        openForm("Log workout", "#distanceField");
         clickOn("#distanceField").write(distance);
         clickOn("#durationField").write(duration);
-        clickOn("#dialogConfirm");
-        settle();
+        submitForm();
     }
 
     /** Replaces a field's contents rather than appending to them. */

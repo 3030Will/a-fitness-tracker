@@ -84,17 +84,25 @@
                              toggles them. -->
                         <TableView fx:id="entryTable" visible="false">
                             <columns>
-                                <!-- A minimum, not just a preference: with four
-                                     columns competing this shrank until the
-                                     year was cut off ("Jul 26, 2..."). -->
-                                <TableColumn fx:id="dateColumn" text="Date" prefWidth="155" minWidth="155"
-                                             maxWidth="175"/>
-                                <TableColumn fx:id="setsColumn" text="Sets" prefWidth="90"/>
-                                <TableColumn fx:id="repsColumn" text="Reps" prefWidth="90"/>
-                                <TableColumn fx:id="weightColumn" text="Weight (lb)" prefWidth="130"/>
+                                <!-- Every column carries a minimum, not just a
+                                     preference. A constrained resize policy
+                                     shrinks past the preference when space is
+                                     short, which cut the year off a date and
+                                     the hours off a time. -->
+                                <TableColumn fx:id="dateColumn" text="Date" prefWidth="155"
+                                             minWidth="155" maxWidth="175"/>
+                                <TableColumn fx:id="setsColumn" text="Sets" prefWidth="90"
+                                             minWidth="75"/>
+                                <TableColumn fx:id="repsColumn" text="Reps" prefWidth="90"
+                                             minWidth="75"/>
+                                <TableColumn fx:id="weightColumn" text="Weight (lb)" prefWidth="130"
+                                             minWidth="120"/>
                                 <TableColumn fx:id="distanceColumn" text="Distance (mi)"
-                                             prefWidth="150"/>
-                                <TableColumn fx:id="durationColumn" text="Time" prefWidth="130"/>
+                                             prefWidth="150" minWidth="125"/>
+                                <TableColumn fx:id="durationColumn" text="Time" prefWidth="130"
+                                             minWidth="100"/>
+                                <TableColumn fx:id="paceColumn" text="Pace (/mi)" prefWidth="130"
+                                             minWidth="110"/>
                             </columns>
                         </TableView>
                     </StackPane>

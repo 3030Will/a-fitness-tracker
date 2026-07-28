@@ -20,6 +20,14 @@ public class App extends Application {
     private static final String MAIN_VIEW = "/com/workouttracker/ui/MainView.fxml";
     private static final String STYLESHEET = "/com/workouttracker/ui/app.css";
 
+    /**
+     * The smallest the window may get. Below this the log panel cannot hold
+     * four columns and its own row of actions without labels truncating.
+     * Tests resize to exactly this to check nothing is cut off.
+     */
+    public static final double MIN_WIDTH = 1120;
+    public static final double MIN_HEIGHT = 660;
+
     @Override
     public void start(Stage stage) {
         try {
@@ -32,10 +40,8 @@ public class App extends Application {
         try {
             stage.setTitle("Workout Progress Tracker");
             stage.setScene(buildScene());
-            // Below this the log panel is too narrow for its own action row
-            // and the buttons start truncating their labels.
-            stage.setMinWidth(1040);
-            stage.setMinHeight(660);
+            stage.setMinWidth(MIN_WIDTH);
+            stage.setMinHeight(MIN_HEIGHT);
             stage.show();
         } catch (IOException | RuntimeException e) {
             fail("The application window could not be built.", e);
@@ -44,7 +50,7 @@ public class App extends Application {
 
     private Scene buildScene() throws IOException {
         Parent root = FXMLLoader.load(resource(MAIN_VIEW));
-        Scene scene = new Scene(root, 1220, 780);
+        Scene scene = new Scene(root, 1280, 800);
         scene.getStylesheets().add(resource(STYLESHEET).toExternalForm());
         return scene;
     }

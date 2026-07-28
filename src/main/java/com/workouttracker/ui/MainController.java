@@ -38,6 +38,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.VBox;
+import javafx.util.StringConverter;
 
 /**
  * The main window: the navigation rail and the exercise list.
@@ -86,6 +87,7 @@ public class MainController {
     @FXML private TableColumn<LogEntry, String> weightColumn;
     @FXML private TableColumn<LogEntry, String> distanceColumn;
     @FXML private TableColumn<LogEntry, String> durationColumn;
+    @FXML private TableColumn<LogEntry, String> paceColumn;
 
     @FXML private ToggleButton progressNav;
     @FXML private VBox exercisesPage;
@@ -356,9 +358,11 @@ public class MainController {
                 entry -> String.format(Locale.US, "%.2f", entry.getDistance())));
         durationColumn.setCellValueFactory(row -> cardio(row.getValue(),
                 CardioEntry::formattedDuration));
+        paceColumn.setCellValueFactory(row -> cardio(row.getValue(),
+                CardioEntry::formattedPace));
 
-        for (TableColumn<LogEntry, String> column :
-                List.of(setsColumn, repsColumn, weightColumn, distanceColumn, durationColumn)) {
+        for (TableColumn<LogEntry, String> column : List.of(
+                setsColumn, repsColumn, weightColumn, distanceColumn, durationColumn, paceColumn)) {
             column.getStyleClass().add("table-cell-numeric");
         }
     }
@@ -395,6 +399,7 @@ public class MainController {
         weightColumn.setVisible(lifting);
         distanceColumn.setVisible(!lifting);
         durationColumn.setVisible(!lifting);
+        paceColumn.setVisible(!lifting);
 
         logTitle.setText(exercise.getName());
         logChip.setText(exercise.getCategory().displayName());
@@ -504,6 +509,7 @@ public class MainController {
         showPersonalRecord("Heaviest set " + heaviest.formattedWeight() + " lb on "
                 + heaviest.getDate().format(ENTRY_DATE));
 
+        paceAxis(false);
         plot(history, "Weight (lb)", "chart-lift",
                 entry -> ((LiftEntry) entry).getWeight());
     }
@@ -515,7 +521,7 @@ public class MainController {
                 .max(Comparator.comparingDouble(CardioEntry::getDistance))
                 .orElseThrow();
         CardioEntry fastest = sessions.stream()
-                .min(Comparator.comparingDouble(MainController::secondsPerMile))
+                .min(Comparator.comparingDouble(CardioEntry::secondsPerMile))
                 .orElseThrow();
         double totalMiles = sessions.stream().mapToDouble(CardioEntry::getDistance).sum();
 
@@ -523,28 +529,39 @@ public class MainController {
                 "Longest session", String.format(Locale.US, "%.2f", longest.getDistance()), "mi",
                 "metric-red");
         setMetric(metricTwoLabel, metricTwoValue, metricTwoUnit,
-                "Best pace", formatPace(secondsPerMile(fastest)), "/mi", "metric-purple");
+                "Best pace", fastest.formattedPace(), "/mi", "metric-purple");
         setMetric(metricThreeLabel, metricThreeValue, metricThreeUnit,
                 "Total distance", String.format(Locale.US, "%.1f", totalMiles), "mi",
                 "metric-blue");
 
-        showPersonalRecord("Longest %.2f mi on %s"
-                .formatted(longest.getDistance(), longest.getDate().format(ENTRY_DATE)));
+        showPersonalRecord("Best pace %s /mi on %s"
+                .formatted(fastest.formattedPace(), fastest.getDate().format(ENTRY_DATE)));
 
-        plot(history, "Distance (mi)", "chart-cardio",
-                entry -> ((CardioEntry) entry).getDistance());
+        // Pace, not distance: a longer run is not a better one, but a faster
+        // mile is. The axis therefore improves downwards.
+        paceAxis(true);
+        plot(history, "Pace (min/mi) — lower is better", "chart-cardio",
+                entry -> ((CardioEntry) entry).secondsPerMile());
     }
 
-    /** Seconds taken per mile, the comparable measure of a cardio session. */
-    private static double secondsPerMile(CardioEntry entry) {
-        return entry.getDistance() <= 0
-                ? Double.MAX_VALUE
-                : entry.getDuration() / entry.getDistance();
-    }
+    /**
+     * Switches the vertical axis between plain numbers and {@code m:ss}. Pace
+     * is held in seconds so it can be plotted, but "528" means nothing to a
+     * runner and "8:48" does.
+     */
+    private void paceAxis(boolean pace) {
+        progressYAxis.setTickLabelFormatter(pace ? new StringConverter<Number>() {
+            @Override
+            public String toString(Number seconds) {
+                long total = Math.round(seconds.doubleValue());
+                return String.format(Locale.US, "%d:%02d", total / 60, Math.abs(total % 60));
+            }
 
-    private static String formatPace(double secondsPerMile) {
-        long total = Math.round(secondsPerMile);
-        return String.format(Locale.US, "%d:%02d", total / 60, total % 60);
+            @Override
+            public Number fromString(String text) {
+                throw new UnsupportedOperationException("the axis is display only");
+            }
+        } : null);
     }
 
     private void plot(List<LogEntry> history, String axisLabel, String categoryClass,

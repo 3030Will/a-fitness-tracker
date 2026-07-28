@@ -4,8 +4,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import com.workouttracker.model.Exercise;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Labeled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,6 +21,25 @@ class ProgressUiTest extends UiTest {
 
     private String textOf(String query) {
         return ((Labeled) lookup(query).query()).getText();
+    }
+
+    /**
+     * Picks an exercise from the chooser through its selection model rather
+     * than by clicking the popup.
+     *
+     * <p>Clicking a cell in a combo box popup races with the popup opening:
+     * the same test passed twice and failed once in three runs, always with
+     * the selection simply not having happened. A test that fails at random
+     * is worse than no test, and what these tests are actually about is what
+     * the chart does once an exercise is chosen.
+     */
+    private void chooseExercise(String name) {
+        ComboBox<Exercise> chooser = lookup("#progressChooser").query();
+        interact(() -> chooser.getItems().stream()
+                .filter(exercise -> exercise.getName().equals(name))
+                .findFirst()
+                .ifPresent(chooser.getSelectionModel()::select));
+        settle();
     }
 
     @Test
@@ -93,6 +116,27 @@ class ProgressUiTest extends UiTest {
     }
 
     @Test
+    @DisplayName("cardio charts pace, not distance, since that is what improves")
+    void chartsPaceForCardio() {
+        createExercise("Long Run", true);
+        clickOn("Long Run");
+        logCardio("5.00", "44:00");   // 8:48 per mile, 528 seconds
+        logCardio("3.00", "30:00");   // 10:00 per mile, 600 seconds
+
+        clickOn("Progress");
+        settle();
+
+        LineChart<?, ?> chart = lookup("#progressChart").query();
+        List<Double> plotted = chart.getData().getFirst().getData().stream()
+                .map(point -> ((Number) point.getYValue()).doubleValue())
+                .toList();
+
+        assertTrue(plotted.contains(528.0) && plotted.contains(600.0),
+                "expected paces in seconds per mile, got " + plotted);
+        assertFalse(plotted.contains(5.0), "distance should no longer be the plotted value");
+    }
+
+    @Test
     @DisplayName("the chart plots one point per session, oldest first")
     void chartsEverySession() {
         createExercise("Bench Press", false);
@@ -114,6 +158,31 @@ class ProgressUiTest extends UiTest {
         CategoryAxis xAxis = (CategoryAxis) chart.getXAxis();
         assertEquals(2, xAxis.getCategories().size(),
                 "both same-day sessions should occupy their own category");
+    }
+
+    @Test
+    @DisplayName("switching from cardio back to a lift restores a plain number axis")
+    void axisResetsWhenLeavingCardio() {
+        createExercise("Bench Press", false);
+        clickOn("Bench Press");
+        logLift("3", "10", "135");
+        createExercise("Long Run", true);
+        clickOn("Long Run");
+        logCardio("5.00", "44:00");
+
+        clickOn("Progress");
+        settle();
+        chooseExercise("Long Run");
+
+        NumberAxis yAxis = (NumberAxis) ((LineChart<?, ?>) lookup("#progressChart").query())
+                .getYAxis();
+        assertTrue(yAxis.getTickLabelFormatter() != null, "cardio should format ticks as m:ss");
+
+        chooseExercise("Bench Press");
+
+        // Left in place, a weight of 135 would render on the axis as "2:15".
+        assertTrue(yAxis.getTickLabelFormatter() == null,
+                "a weight axis should show plain numbers");
     }
 
     @Test

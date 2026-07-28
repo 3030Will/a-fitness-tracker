@@ -42,6 +42,28 @@ public final class CardioEntry extends LogEntry {
                 duration / 3600, (duration % 3600) / 60, duration % 60);
     }
 
+    /**
+     * Seconds taken per mile — the measure that makes two sessions of
+     * different lengths comparable, and the one that shows improvement.
+     *
+     * <p>Infinite for a session with no distance, so that such an entry can
+     * never come out as the fastest. Validation rejects a distance of zero, so
+     * this is a guard rather than a case that should arise.
+     */
+    public double secondsPerMile() {
+        return distance <= 0 ? Double.POSITIVE_INFINITY : duration / distance;
+    }
+
+    /** The pace as {@code m:ss} per mile, or a dash when there is none. */
+    public String formattedPace() {
+        double pace = secondsPerMile();
+        if (!Double.isFinite(pace)) {
+            return "—";
+        }
+        long total = Math.round(pace);
+        return String.format(Locale.US, "%d:%02d", total / 60, total % 60);
+    }
+
     public double getDistance() {
         return distance;
     }

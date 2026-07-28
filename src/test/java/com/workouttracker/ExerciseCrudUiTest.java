@@ -37,7 +37,7 @@ class ExerciseCrudUiTest extends UiTest {
     @Test
     @DisplayName("a blank name is refused and the form stays open")
     void refusesABlankName() {
-        clickOn("New exercise");
+        openForm("New exercise", "#nameField");
         clickOn("#dialogConfirm");
         settle();
 
@@ -51,7 +51,7 @@ class ExerciseCrudUiTest extends UiTest {
     void refusesADuplicateName() {
         createExercise("Squats", false);
 
-        clickOn("New exercise");
+        openForm("New exercise", "#nameField");
         clickOn("#nameField").write("Squats");
         clickOn("#dialogConfirm");
         settle();
@@ -66,10 +66,9 @@ class ExerciseCrudUiTest extends UiTest {
         createExercise("Bench Pres", false);
 
         clickOn("Bench Pres");
-        clickOn("Edit");
+        openForm("Edit", "#nameField");
         replaceText("#nameField", "Bench Press");
-        clickOn("#dialogConfirm");
-        settle();
+        submitForm();
 
         assertEquals("Bench Press", exercises.findAll().getFirst().getName());
     }
@@ -81,8 +80,7 @@ class ExerciseCrudUiTest extends UiTest {
         clickOn("Bench Press");
         logLift("3", "10", "135");
 
-        clickOn("Edit");
-        settle();
+        openForm("Edit", "#cardioToggle");
 
         assertTrue(lookup("#cardioToggle").query().isDisabled(),
                 "the cardio segment should be disabled");
@@ -97,9 +95,7 @@ class ExerciseCrudUiTest extends UiTest {
 
         clickOn("Squats");
         clickOn("Delete");
-        settle();
-        clickOn("#confirmDestructive");
-        settle();
+        confirmDelete();
 
         assertTrue(exercises.findAll().isEmpty(), "the exercise should be gone");
     }
@@ -111,9 +107,8 @@ class ExerciseCrudUiTest extends UiTest {
 
         clickOn("Squats");
         clickOn("Delete");
-        settle();
-        clickOn("Cancel");
-        settle();
+        waitForNode("#confirmDestructive");
+        cancelDialog();
 
         assertEquals(1, exercises.findAll().size(), "the exercise should still be there");
     }
@@ -129,9 +124,7 @@ class ExerciseCrudUiTest extends UiTest {
         assertEquals(1, logEntries.findByExercise(longRun.getId()).size());
 
         clickOn("Delete");
-        settle();
-        clickOn("#confirmDestructive");
-        settle();
+        confirmDelete();
 
         assertTrue(exercises.findAll().isEmpty());
         assertTrue(logEntries.findByExercise(longRun.getId()).isEmpty(),

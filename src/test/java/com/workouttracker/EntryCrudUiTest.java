@@ -63,7 +63,7 @@ class EntryCrudUiTest extends UiTest {
         createExercise("Long Run", true);
         clickOn("Long Run");
 
-        clickOn("Log workout");
+        openForm("Log workout", "#distanceField");
         clickOn("#distanceField").write("3.1");
         clickOn("#durationField").write("30:70");
         clickOn("#dialogConfirm");
@@ -79,7 +79,7 @@ class EntryCrudUiTest extends UiTest {
         createExercise("Bench Press", false);
         clickOn("Bench Press");
 
-        clickOn("Log workout");
+        openForm("Log workout", "#setsField");
         clickOn("#setsField").write("3");
         clickOn("#repsField").write("10");
         clickOn("#weightField").write("-5");
@@ -108,10 +108,9 @@ class EntryCrudUiTest extends UiTest {
         logLift("3", "10", "135");
 
         clickOn(today());
-        clickOn("Edit entry");
+        openForm("Edit entry", "#weightField");
         replaceText("#weightField", "185");
-        clickOn("#dialogConfirm");
-        settle();
+        submitForm();
 
         assertEquals(185, assertInstanceOf(LiftEntry.class,
                 entriesOfFirstExercise().getFirst()).getWeight());
@@ -127,9 +126,7 @@ class EntryCrudUiTest extends UiTest {
 
         clickOn(today());
         clickOn("Delete entry");
-        settle();
-        clickOn("#confirmDestructive");
-        settle();
+        confirmDelete();
 
         assertTrue(entriesOfFirstExercise().isEmpty());
     }
@@ -143,33 +140,66 @@ class EntryCrudUiTest extends UiTest {
 
         clickOn(today());
         clickOn("Delete entry");
-        settle();
-        clickOn("Cancel");
-        settle();
+        waitForNode("#confirmDestructive");
+        cancelDialog();
 
         assertEquals(1, entriesOfFirstExercise().size());
     }
 
     @Test
-    @DisplayName("the date column keeps a full date at the smallest window size")
-    void dateColumnSurvivesTheSmallestWindow() {
+    @DisplayName("a lift's columns all fit at the smallest window size")
+    void liftColumnsFitAtTheSmallestWindow() {
         createExercise("Bench Press", false);
         clickOn("Bench Press");
         logLift("3", "10", "135");
 
-        // Four columns compete for the log panel here, where cardio has three.
-        // Without a minimum the date column gave way first and lost its year.
+        assertColumnsFitAtMinimumWidth();
+    }
+
+    @Test
+    @DisplayName("a cardio session's columns all fit at the smallest window size")
+    void cardioColumnsFitAtTheSmallestWindow() {
+        createExercise("Long Run", true);
+        clickOn("Long Run");
+        logCardio("5.00", "44:00");
+
+        assertColumnsFitAtMinimumWidth();
+    }
+
+    /**
+     * Shrinks the window as far as the application allows and checks the log
+     * table can still give every visible column the width it needs.
+     *
+     * <p>A constrained resize policy squeezes columns past their preferred
+     * width when space is short, which is how a date lost its year and a time
+     * lost its hours. Each column now states a minimum; this checks the panel
+     * is wide enough to honour all of them at once.
+     */
+    private void assertColumnsFitAtMinimumWidth() {
         interact(() -> {
-            stage.setWidth(1040);
-            stage.setHeight(660);
+            stage.setWidth(App.MIN_WIDTH);
+            stage.setHeight(App.MIN_HEIGHT);
         });
         settle();
 
         TableView<?> table = lookup("#entryTable").query();
-        TableColumn<?, ?> dateColumn = table.getColumns().getFirst();
-        assertTrue(dateColumn.getWidth() >= 155,
-                "the date column shrank to " + dateColumn.getWidth()
-                        + ", which cuts the year off");
+        double needed = table.getColumns().stream()
+                .filter(TableColumn::isVisible)
+                .mapToDouble(TableColumn::getMinWidth)
+                .sum();
+
+        assertTrue(needed <= table.getWidth(),
+                "the visible columns need %.0f pixels but the table is only %.0f wide, so something truncates"
+                        .formatted(needed, table.getWidth()));
+
+        for (TableColumn<?, ?> column : table.getColumns()) {
+            if (column.isVisible()) {
+                assertTrue(column.getWidth() >= column.getMinWidth(),
+                        "\"%s\" shrank to %.0f, below its %.0f minimum"
+                                .formatted(column.getText(), column.getWidth(),
+                                        column.getMinWidth()));
+            }
+        }
     }
 
     @Test
