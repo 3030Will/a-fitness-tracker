@@ -24,3 +24,6 @@ nbproject/private/
 # Local planning / instructions — kept out of the public repo
 CLAUDE.md
 VIDEO-SCRIPT.md
+
+# The report is submitted directly, not published with the source
+docs/*.pdf
