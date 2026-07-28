@@ -508,6 +508,10 @@
     -fx-alignment: center-left;
     -fx-padding: 11 16 11 16;
     -fx-background-radius: 12;
+    /* Must match the background radius. The .toggle-button base above is a
+       pill, and without this the focus ring keeps that 999 while the fill
+       behind it stays at 12 — a pill outline around a rounded rectangle. */
+    -fx-border-radius: 12;
     -fx-max-width: Infinity;
     -fx-cursor: hand;
 }
