@@ -38,6 +38,7 @@ import javafx.scene.control.TableView;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.VBox;
+import javafx.stage.Window;
 import javafx.util.StringConverter;
 
 /**
@@ -180,7 +181,7 @@ public class MainController {
                         selectById(saved.getId());
                     });
         } catch (IOException e) {
-            Alerts.error("The exercise form could not be opened.", e.getMessage());
+            Alerts.error(window(), "The exercise form could not be opened.", e.getMessage());
         }
     }
 
@@ -191,7 +192,7 @@ public class MainController {
                 : "Its %d log %s will be deleted as well. This cannot be undone."
                         .formatted(row.entryCount(), row.entryCount() == 1 ? "entry" : "entries");
 
-        if (!Alerts.confirmDestructive(
+        if (!Alerts.confirmDestructive(window(),
                 "Delete \"%s\"?".formatted(exercise.getName()), consequence, "Delete")) {
             return;
         }
@@ -200,7 +201,7 @@ public class MainController {
             exercises.delete(exercise.getId());
             refresh();
         } catch (DataAccessException e) {
-            Alerts.error("\"%s\" could not be deleted.".formatted(exercise.getName()),
+            Alerts.error(window(), "\"%s\" could not be deleted.".formatted(exercise.getName()),
                     e.getMessage());
         }
     }
@@ -227,7 +228,7 @@ public class MainController {
 
         // summary() renders the entry the way its own kind should read, so the
         // prompt names what is about to go rather than saying "this entry".
-        boolean confirmed = Alerts.confirmDestructive(
+        boolean confirmed = Alerts.confirmDestructive(window(),
                 "Delete this entry?",
                 "%s on %s will be removed. This cannot be undone."
                         .formatted(entry.summary(), entry.getDate().format(ENTRY_DATE)),
@@ -240,7 +241,7 @@ public class MainController {
             logEntries.delete(entry.getId());
             reloadKeepingSelection();
         } catch (DataAccessException e) {
-            Alerts.error("The entry could not be deleted.", e.getMessage());
+            Alerts.error(window(), "The entry could not be deleted.", e.getMessage());
         }
     }
 
@@ -252,7 +253,7 @@ public class MainController {
                                 logEntries)
                         .ifPresent(saved -> reloadKeepingSelection());
             } catch (IOException e) {
-                Alerts.error("The workout form could not be opened.", e.getMessage());
+                Alerts.error(window(), "The workout form could not be opened.", e.getMessage());
             }
         });
     }
@@ -267,6 +268,11 @@ public class MainController {
             refresh();
             selectById(exerciseId);
         });
+    }
+
+    /** The window these dialogs belong to, so they stay inside full screen. */
+    private Window window() {
+        return exerciseTable.getScene() == null ? null : exerciseTable.getScene().getWindow();
     }
 
     private Optional<ExerciseRow> selected() {
@@ -416,7 +422,7 @@ public class MainController {
         } catch (DataAccessException e) {
             entries.clear();
             logCount.setText("");
-            Alerts.error("The log for \"%s\" could not be loaded.".formatted(exercise.getName()),
+            Alerts.error(window(), "The log for \"%s\" could not be loaded.".formatted(exercise.getName()),
                     e.getMessage());
         }
     }
@@ -429,7 +435,7 @@ public class MainController {
                     .toList());
         } catch (DataAccessException e) {
             rows.clear();
-            Alerts.error("Your exercises could not be loaded.", e.getMessage());
+            Alerts.error(window(), "Your exercises could not be loaded.", e.getMessage());
         }
     }
 

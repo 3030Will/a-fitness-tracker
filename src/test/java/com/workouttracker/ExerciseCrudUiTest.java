@@ -1,11 +1,13 @@
 package com.workouttracker;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.workouttracker.model.Category;
 import com.workouttracker.model.Exercise;
 import java.util.List;
+import javafx.stage.Stage;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -129,6 +131,24 @@ class ExerciseCrudUiTest extends UiTest {
         assertTrue(exercises.findAll().isEmpty());
         assertTrue(logEntries.findByExercise(longRun.getId()).isEmpty(),
                 "the entries should have gone with it");
+    }
+
+    @Test
+    @DisplayName("the delete prompt belongs to the main window")
+    void deletePromptHasAnOwner() {
+        createExercise("Squats", false);
+        clickOn("Squats");
+        clickOn("Delete");
+        waitForNode("#confirmDestructive");
+
+        // Without an owner the prompt is a top-level window of its own. On
+        // macOS that puts it outside the application's full-screen space: it
+        // takes over the whole display, and dismissing it leaves the user on
+        // the desktop instead of back in the app.
+        Stage prompt = (Stage) lookup("#confirmDestructive").query().getScene().getWindow();
+        assertNotNull(prompt.getOwner(), "the delete prompt was opened without an owner");
+
+        cancelDialog();
     }
 
     @Test

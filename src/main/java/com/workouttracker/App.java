@@ -33,7 +33,7 @@ public class App extends Application {
         try {
             Database.initialize();
         } catch (DataAccessException e) {
-            fail("The workout database could not be opened.", e);
+            fail(stage, "The workout database could not be opened.", e);
             return;
         }
 
@@ -44,7 +44,7 @@ public class App extends Application {
             stage.setMinHeight(MIN_HEIGHT);
             stage.show();
         } catch (IOException | RuntimeException e) {
-            fail("The application window could not be built.", e);
+            fail(stage, "The application window could not be built.", e);
         }
     }
 
@@ -72,9 +72,9 @@ public class App extends Application {
      * The application cannot do anything useful in this state, so it reports
      * the problem and shuts down rather than leaving an empty window open.
      */
-    private void fail(String header, Throwable cause) {
+    private void fail(Stage owner, String header, Throwable cause) {
         String detail = cause.getMessage() == null ? cause.toString() : cause.getMessage();
-        Alerts.error(header, detail);
+        Alerts.error(owner, header, detail);
         Platform.exit();
     }
 
