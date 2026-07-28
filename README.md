@@ -138,7 +138,7 @@ exercise — live in the service layer.
 
 ## Testing
 
-163 tests run under `mvn test`. Most cover the database, validation and
+165 tests run under `mvn test`. Most cover the database, validation and
 business rules directly. The rest drive the real interface with TestFX,
 clicking buttons and typing into forms, so that "every control works" is
 something the build checks rather than something the author asserts. They run
