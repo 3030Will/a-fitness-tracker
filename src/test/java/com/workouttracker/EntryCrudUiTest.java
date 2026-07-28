@@ -9,6 +9,7 @@ import com.workouttracker.model.Exercise;
 import com.workouttracker.model.LiftEntry;
 import com.workouttracker.model.LogEntry;
 import java.time.LocalDate;
+import java.util.Comparator;
 import java.util.List;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
@@ -224,6 +225,48 @@ class EntryCrudUiTest extends UiTest {
                                         column.getMinWidth()));
             }
         }
+    }
+
+    @Test
+    @DisplayName("clicking a numeric header sorts by value, not by digits")
+    void sortsWeightNumerically() {
+        createExercise("Bench Press", false);
+        clickOn("Bench Press");
+        logLift("3", "10", "100");
+        logLift("3", "10", "45");
+        logLift("3", "10", "9");
+
+        // The cells hold formatted text. Sorted as words these come out
+        // 100, 45, 9 — which is what a table full of numbers must not do.
+        clickOn("Weight (lb)");
+        settle();
+
+        TableView<?> table = lookup("#entryTable").query();
+        TableColumn<?, ?> weight = table.getColumns().get(3);
+        List<Double> shown = table.getItems().stream()
+                .map(entry -> ((LiftEntry) entry).getWeight())
+                .toList();
+
+        assertEquals(List.of(9.0, 45.0, 100.0), shown,
+                "expected ascending by value, got " + shown);
+        assertEquals("Weight (lb)", weight.getText(), "sorted the wrong column");
+    }
+
+    @Test
+    @DisplayName("clicking the date header sorts chronologically")
+    void sortsDatesChronologically() {
+        createExercise("Bench Press", false);
+        clickOn("Bench Press");
+        logLift("3", "10", "100");
+
+        TableColumn<?, ?> date = ((TableView<?>) lookup("#entryTable").query()).getColumns().getFirst();
+        Comparator<String> order = (Comparator<String>) date.getComparator();
+
+        // "Jul" sorts before "Jun" alphabetically; by date it must not.
+        assertTrue(order.compare("Jun 30, 2026", "Jul 6, 2026") < 0,
+                "June should sort before July");
+        assertTrue(order.compare("Aug 1, 2026", "Jul 6, 2026") > 0,
+                "August should sort after July");
     }
 
     @Test

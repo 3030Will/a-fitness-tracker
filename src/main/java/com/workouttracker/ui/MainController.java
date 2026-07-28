@@ -9,6 +9,7 @@ import com.workouttracker.service.ExerciseService;
 import com.workouttracker.service.LogEntryService;
 import com.workouttracker.util.DataAccessException;
 import java.io.IOException;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -372,6 +373,40 @@ public class MainController {
                 setsColumn, repsColumn, weightColumn, distanceColumn, durationColumn, paceColumn)) {
             column.getStyleClass().add("table-cell-numeric");
         }
+
+        // Column headers sort when clicked. The cells hold formatted text, so
+        // the default comparator would order them as words: 9 after 45, and
+        // July before June. These sort by what the text means.
+        dateColumn.setComparator(Comparator.comparing(text -> LocalDate.parse(text, ENTRY_DATE)));
+        for (TableColumn<LogEntry, String> column :
+                List.of(setsColumn, repsColumn, weightColumn, distanceColumn)) {
+            column.setComparator(Comparator.comparingDouble(MainController::asNumber));
+        }
+        for (TableColumn<LogEntry, String> column : List.of(durationColumn, paceColumn)) {
+            column.setComparator(Comparator.comparingLong(MainController::asSeconds));
+        }
+    }
+
+    /** Reads a formatted number back out for sorting; unusable text sorts first. */
+    private static double asNumber(String text) {
+        try {
+            return Double.parseDouble(text.trim());
+        } catch (NumberFormatException | NullPointerException e) {
+            return Double.NEGATIVE_INFINITY;
+        }
+    }
+
+    /** Reads {@code hh:mm:ss} or {@code m:ss} back out as elapsed seconds. */
+    private static long asSeconds(String clock) {
+        long total = 0;
+        for (String part : clock.split(":")) {
+            try {
+                total = total * 60 + Long.parseLong(part.trim());
+            } catch (NumberFormatException e) {
+                return Long.MIN_VALUE;
+            }
+        }
+        return total;
     }
 
     private ReadOnlyStringWrapper lift(LogEntry entry, Function<LiftEntry, String> read) {
