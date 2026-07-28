@@ -160,6 +160,7 @@ public class ExerciseDialogController {
     private void showErrors(List<String> errors) {
         show(errorBanner, null);
         errorLabel.setText(String.join("\n", errors));
+        Dialogs.growToFit(errorLabel);
         if (!nameField.getStyleClass().contains("field-error")) {
             nameField.getStyleClass().add("field-error");
         }

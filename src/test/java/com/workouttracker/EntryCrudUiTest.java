@@ -10,6 +10,7 @@ import com.workouttracker.model.LiftEntry;
 import com.workouttracker.model.LogEntry;
 import java.time.LocalDate;
 import java.util.List;
+import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import org.junit.jupiter.api.DisplayName;
@@ -87,6 +88,29 @@ class EntryCrudUiTest extends UiTest {
         settle();
 
         assertTrue(entriesOfFirstExercise().isEmpty(), "nothing should have been saved");
+    }
+
+    @Test
+    @DisplayName("every validation message is legible, not clipped")
+    void allValidationMessagesAreVisible() {
+        createExercise("Bench Press", false);
+        clickOn("Bench Press");
+
+        openForm("Log workout", "#setsField");
+        clickOn("#setsField").write("three");
+        clickOn("#repsField").write("0");
+        clickOn("#weightField").write("-10");
+        clickOn("#dialogConfirm");
+        settle();
+
+        // Three problems at once. The banner is filled in after the dialog was
+        // laid out, so without growing it the third message is dropped and the
+        // second ends in an ellipsis.
+        Label banner = lookup("#errorLabel").query();
+        assertEquals(3, banner.getText().lines().count(), "expected three messages");
+        assertTrue(banner.getHeight() >= banner.prefHeight(banner.getWidth()),
+                "the banner is %.0f tall but needs %.0f, so a message is clipped"
+                        .formatted(banner.getHeight(), banner.prefHeight(banner.getWidth())));
     }
 
     @Test

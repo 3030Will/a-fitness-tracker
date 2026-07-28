@@ -181,6 +181,7 @@ public class EntryDialogController {
         errorLabel.setText(String.join("\n", errors));
         errorBanner.setVisible(true);
         errorBanner.setManaged(true);
+        Dialogs.growToFit(errorLabel);
 
         for (String error : errors) {
             fieldsByMessagePrefix.entrySet().stream()

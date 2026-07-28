@@ -117,6 +117,7 @@ public class MainController {
         refresh();
     }
 
+
     /** Edit and Delete act on the selected row, so they are dimmed without one. */
     private void setUpSelection() {
         BooleanBinding nothingSelected =
